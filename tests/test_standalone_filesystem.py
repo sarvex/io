@@ -700,7 +700,7 @@ def test_gfile_copy(fs, patchs, monkeypatch):
     src = path_to("test_gfile_copy_src")
     dst = path_to("test_gfile_copy_dst")
 
-    body = b"123456789"*1000
+    body = b"123456789"*10000000
     write(src, body)
 
     tf.io.gfile.copy(src, dst)
