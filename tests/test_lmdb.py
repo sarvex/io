@@ -38,7 +38,7 @@ def test_lmdb_read_from_file():
     assert np.all([key.numpy() for key in lmdb] == [str(i).encode() for i in range(10)])
 
     for key in lmdb:
-        assert lmdb[key].numpy() == str(chr(ord("a") + int(key.numpy()))).encode()
+        assert lmdb[key].numpy() == chr(ord("a") + int(key.numpy())).encode()
 
     # TODO: Not working for Windows yet
     if sys.platform in ("linux", "darwin"):

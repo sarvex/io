@@ -49,15 +49,11 @@ def filter_fields_from_response(fields, response):
             if isinstance(childrens, list):
                 tmp_list = []
                 for children in childrens:
-                    child = {}
-                    for child_key in keys[1].split(","):
-                        child[child_key] = children[child_key]
+                    child = {child_key: children[child_key] for child_key in keys[1].split(",")}
                     tmp_list.append(child)
                 tmp[keys[0]] = tmp_list
             elif isinstance(childrens, dict):
-                child = {}
-                for child_key in keys[1].split(","):
-                    child[child_key] = children[child_key]
+                child = {child_key: children[child_key] for child_key in keys[1].split(",")}
                 tmp[keys[0]] = child
     return json.dumps(tmp)
 
@@ -76,8 +72,10 @@ def filtered_response(request, response):
 
 
 def raise_csek_error(code=400):
-    msg = "Missing a SHA256 hash of the encryption key, or it is not"
-    msg += " base64 encoded, or it does not match the encryption key."
+    msg = (
+        "Missing a SHA256 hash of the encryption key, or it is not"
+        + " base64 encoded, or it does not match the encryption key."
+    )
     link = "https://cloud.google.com/storage/docs/encryption#customer-supplied_encryption_keys"
     error = {
         "error": {
@@ -109,7 +107,7 @@ def validate_customer_encryption_headers(
     try:
         if algo_header_value is None or algo_header_value != "AES256":
             raise error_response.ErrorResponse(
-                "Invalid or missing algorithm %s for CSEK" % algo_header_value,
+                f"Invalid or missing algorithm {algo_header_value} for CSEK",
                 status_code=400,
             )
 
@@ -161,11 +159,11 @@ def corrupt_media(media):
     # Deal with the boundary condition.
     if not media:
         return bytearray(random.sample("abcdefghijklmnopqrstuvwxyz", 1), "utf-8")
-    return b"B" + media[1:] if media[0:1] == b"A" else b"A" + media[1:]
+    return b"B" + media[1:] if media[:1] == b"A" else b"A" + media[1:]
 
 
 # Define the collection of Buckets indexed by <bucket_name>
-GCS_BUCKETS = dict()
+GCS_BUCKETS = {}
 
 
 def lookup_bucket(bucket_name):
@@ -179,7 +177,7 @@ def lookup_bucket(bucket_name):
     bucket = GCS_BUCKETS.get(bucket_name)
     if bucket is None:
         raise error_response.ErrorResponse(
-            "Bucket %s not found" % bucket_name, status_code=404
+            f"Bucket {bucket_name} not found", status_code=404
         )
     return bucket
 
@@ -212,7 +210,7 @@ def all_buckets():
 
 
 # Define the collection of GcsObjects indexed by <bucket_name>/o/<object_name>
-GCS_OBJECTS = dict()
+GCS_OBJECTS = {}
 
 
 def lookup_object(bucket_name, object_name):
@@ -244,7 +242,7 @@ def get_object(bucket_name, object_name, default_value):
     :return: tuple the object path and the object.
     :rtype: (str,GcsObject)
     """
-    object_path = bucket_name + "/o/" + object_name
+    object_path = f"{bucket_name}/o/{object_name}"
     return object_path, GCS_OBJECTS.get(object_path, default_value)
 
 
@@ -288,9 +286,7 @@ def parse_multi_part(request):
     def parse_metadata(part):
         result = part.split(b"\r\n")
         if result[0] != b"" and result[-1] != b"":
-            raise error_response.ErrorResponse(
-                "Missing or invalid multipart %s" % str(part)
-            )
+            raise error_response.ErrorResponse(f"Missing or invalid multipart {str(part)}")
         result = list(filter(None, result))
         headers = {}
         if len(result) < 2:
@@ -301,17 +297,13 @@ def parse_multi_part(request):
         return result[-1]
 
     def parse_body(part):
-        if part[0:2] != b"\r\n" or part[-2:] != b"\r\n":
-            raise error_response.ErrorResponse(
-                "Missing or invalid multipart %s" % str(part)
-            )
+        if part[:2] != b"\r\n" or part[-2:] != b"\r\n":
+            raise error_response.ErrorResponse(f"Missing or invalid multipart {str(part)}")
         part = part[2:-2]
         part.lstrip(b"\r\n")
         content_type_index = part.find(b"\r\n")
         if content_type_index == -1:
-            raise error_response.ErrorResponse(
-                "Missing or invalid multipart %s" % str(part)
-            )
+            raise error_response.ErrorResponse(f"Missing or invalid multipart {str(part)}")
         content_type = part[:content_type_index]
         _, value = content_type.decode("utf-8").split(": ")
         media = part[content_type_index + 2 :]
@@ -323,9 +315,9 @@ def parse_multi_part(request):
     boundary = boundary.encode("utf-8")
     body = extract_media(request)
     parts = body.split(b"--" + boundary)
-    if parts[-1] != b"--\r\n" and parts[-1] != b"--":
+    if parts[-1] not in [b"--\r\n", b"--"]:
         raise error_response.ErrorResponse(
-            "Missing end marker (--%s--) in media body" % boundary
+            f"Missing end marker (--{boundary}--) in media body"
         )
     resource = parse_metadata(parts[1])
     metadata = json.loads(resource)

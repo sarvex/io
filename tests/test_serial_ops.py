@@ -28,8 +28,8 @@ def test_serialization():
     NOTE- test will only work in eager mode due to list() dataset cast."""
     savefolder = tempfile.TemporaryDirectory()
     savepath = os.path.join(savefolder.name, "temp_dataset")
-    tfrecord_path = savepath + ".tfrecord"
-    header_path = savepath + ".header"
+    tfrecord_path = f"{savepath}.tfrecord"
+    header_path = f"{savepath}.header"
 
     # Data
     x = np.linspace(1, 3000, num=3000).reshape(10, 10, 10, 3)
@@ -67,8 +67,8 @@ def graph_save_fail():
     trying to save in graph mode."""
     savefolder = tempfile.TemporaryDirectory()
     savepath = os.path.join(savefolder.name, "temp_dataset")
-    tfrecord_path = savepath + ".tfrecord"
-    header_path = savepath + ".header"
+    tfrecord_path = f"{savepath}.tfrecord"
+    header_path = f"{savepath}.header"
 
     # Data
     x = np.linspace(1, 3000, num=3000).reshape(10, 10, 10, 3)

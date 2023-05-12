@@ -49,8 +49,6 @@ def mock_patchs(monkeypatch, patchs):
                 monkeypatch.setenv(key, value)
     elif callable(patchs):
         patchs(monkeypatch)
-    else:
-        pass
 
 
 @pytest.fixture(autouse=True)
@@ -72,13 +70,12 @@ def should_skip(uri, check_only=True):
     elif uri == HDFS_URI and sys.platform in ("win32", "darwin"):
         message = "TODO: `hdfs` does not work properly on macOS/Windows yet"
 
-    if message is not None:
-        if check_only:
-            return True
-        else:
-            pytest.skip(message)
-    else:
+    if message is None:
         return False
+    if check_only:
+        return True
+    else:
+        pytest.skip(message)
 
 
 @pytest.fixture(scope="module")
@@ -104,10 +101,6 @@ def s3_fs():
         bucket_name = f"tf-io-bucket-s3-{int(time.time())}"
         client = boto3.client("s3", endpoint_url=endpoint_url)
         client.create_bucket(Bucket=bucket_name)
-    else:
-        # TODO(vnvo2409): Implement for testing against production scenario
-        pass
-
     client.put_object(Bucket=bucket_name, Key=ROOT_PREFIX, Body="")
 
     def parse(path):
@@ -161,10 +154,6 @@ def az_fs():
         )
         client = ContainerClient.from_connection_string(conn_str, container_name)
         client.create_container()
-    else:
-        # TODO(vnvo2409): Implement for testing against production scenario
-        pass
-
     client.upload_blob(ROOT_PREFIX, b"")
 
     def parse(path):
@@ -252,10 +241,6 @@ def gcs_fs():
         client = storage.Client.create_anonymous_client()
         client.project = "test_project"
         bucket = client.create_bucket(bucket_name)
-    else:
-        # TODO(vnvo2409): Implement for testing against production scenario
-        pass
-
     def parse(path):
         res = urlparse(path, scheme=GCS_URI, allow_fragments=False)
         return res.path[1:]
@@ -422,8 +407,7 @@ def get_readable_body(uri):
         num_lines = 10
         base_body = b"abcdefghijklmn\n"
         lines = [base_body] * num_lines
-        body = b"".join(lines)
-        return body
+        return b"".join(lines)
     else:
         local_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "test_http", "LICENSE-2.0.txt"
@@ -468,7 +452,7 @@ def test_gfile_GFile_readable(fs, patchs, monkeypatch):
     # TODO(vnvo2409): `az` should raise `tf.errors.NotFoundError`.
     if uri != AZ_URI:
         with pytest.raises(tf.errors.NotFoundError):
-            fname_not_found = fname + "_not_found"
+            fname_not_found = f"{fname}_not_found"
             with tf.io.gfile.GFile(fname_not_found, "rb") as f:
                 _ = f.read()
 
@@ -564,7 +548,7 @@ def test_gfile_GFile_writable(fs, patchs, monkeypatch):
     # Append
     # TODO(vnvo2409): implement `az` appendable file.
     # TODO(vnvo2409): implement `hdfs` appendable file.
-    if uri != AZ_URI and uri != HDFS_URI:
+    if uri not in [AZ_URI, HDFS_URI]:
         with tf.io.gfile.GFile(fname, "ab") as f:
             f.write(base_body)
             f.flush()

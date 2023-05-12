@@ -28,7 +28,7 @@ def test_pcap_input():
     pcap_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_pcap", "http.pcap"
     )
-    file_url = "file://" + pcap_filename
+    file_url = f"file://{pcap_filename}"
 
     dataset = tfio.IODataset.from_pcap(file_url, capacity=5).batch(1)
 

@@ -30,7 +30,7 @@ def test_kafka_io_tensor():
     assert kafka.dtype == tf.string
     assert kafka.shape.as_list() == [None]
     assert np.all(
-        kafka.to_tensor().numpy() == [("D" + str(i)).encode() for i in range(10)]
+        kafka.to_tensor().numpy() == [f"D{str(i)}".encode() for i in range(10)]
     )
     assert len(kafka.to_tensor()) == 10
 
@@ -91,7 +91,7 @@ def test_kafka_output_sequence():
             self._sequence.flush()
 
     channel = f"e{time.time()}e"
-    topic = "test_" + channel
+    topic = f"test_{channel}"
 
     # By default batch size is 32
     output = OutputCallback(32, topic, "localhost")
@@ -135,7 +135,9 @@ def test_kafka_stream_dataset():
     dataset = tfio.IODataset.stream().from_kafka("test").batch(2)
     assert np.all(
         [k.numpy().tolist() for (k, _) in dataset]
-        == np.asarray([("D" + str(i)).encode() for i in range(10)]).reshape((5, 2))
+        == np.asarray([f"D{str(i)}".encode() for i in range(10)]).reshape(
+            (5, 2)
+        )
     )
 
 
@@ -147,7 +149,9 @@ def test_kafka_io_dataset():
     for _ in range(5):
         assert np.all(
             [k.numpy().tolist() for (k, _) in dataset]
-            == np.asarray([("D" + str(i)).encode() for i in range(10)]).reshape((5, 2))
+            == np.asarray([f"D{str(i)}".encode() for i in range(10)]).reshape(
+                (5, 2)
+            )
         )
 
 
@@ -196,7 +200,7 @@ def test_kafka_group_io_dataset_primary_cg():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(10))
+        == sorted(f"D{str(i)}".encode() for i in range(10))
     )
 
 
@@ -229,7 +233,7 @@ def test_kafka_group_io_dataset_primary_cg_new_topic():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(10))
+        == sorted(f"D{str(i)}".encode() for i in range(10))
     )
 
 
@@ -253,7 +257,7 @@ def test_kafka_group_io_dataset_resume_primary_cg():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(10, 100))
+        == sorted(f"D{str(i)}".encode() for i in range(10, 100))
     )
 
 
@@ -277,7 +281,7 @@ def test_kafka_group_io_dataset_resume_primary_cg_new_topic():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(10, 100))
+        == sorted(f"D{str(i)}".encode() for i in range(10, 100))
     )
 
 
@@ -299,7 +303,7 @@ def test_kafka_group_io_dataset_secondary_cg():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(100))
+        == sorted(f"D{str(i)}".encode() for i in range(100))
     )
 
 
@@ -320,7 +324,7 @@ def test_kafka_group_io_dataset_tertiary_cg_multiple_topics():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted([("D" + str(i)).encode() for i in range(100)] * 2)
+        == sorted([f"D{str(i)}".encode() for i in range(100)] * 2)
     )
 
 
@@ -340,7 +344,7 @@ def test_kafka_group_io_dataset_auto_offset_reset():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(100))
+        == sorted(f"D{str(i)}".encode() for i in range(100))
     )
 
     dataset = tfio.experimental.streaming.KafkaGroupIODataset(
@@ -367,7 +371,7 @@ def test_kafka_group_io_dataset_auto_offset_reset():
     )
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(100))
+        == sorted(f"D{str(i)}".encode() for i in range(100))
     )
 
     dataset = tfio.experimental.streaming.KafkaGroupIODataset(
@@ -400,10 +404,9 @@ def test_kafka_group_io_dataset_invalid_stream_timeout():
             configuration=["session.timeout.ms=7000", "max.poll.interval.ms=8000"],
         )
     except ValueError as e:
-        assert str(
-            e
-        ) == "Invalid stream_timeout value: {} ,set it to -1 to block indefinitely.".format(
-            STREAM_TIMEOUT
+        assert (
+            str(e)
+            == f"Invalid stream_timeout value: {STREAM_TIMEOUT} ,set it to -1 to block indefinitely."
         )
 
 
@@ -445,7 +448,7 @@ def test_kafka_group_io_dataset_stream_timeout_check():
     # along with the new 100 messages
     assert np.all(
         sorted(k.numpy() for (k, _) in dataset)
-        == sorted(("D" + str(i)).encode() for i in range(200))
+        == sorted(f"D{str(i)}".encode() for i in range(200))
     )
 
 
@@ -474,9 +477,7 @@ def test_kafka_mini_dataset_size():
         ],
     )
     for mini_d in dataset:
-        count = 0
-        for _ in mini_d:
-            count += 1
+        count = sum(1 for _ in mini_d)
         assert count == BATCH_NUM_MESSAGES
         break
 

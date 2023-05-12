@@ -35,9 +35,7 @@ class BaseDataset(tf.compat.v2.data.Dataset):
         e = [
             tf.TensorSpec(p.as_list(), q) for (p, q) in zip(self._shapes, self._dtypes)
         ]
-        if len(e) == 1:
-            return e[0]
-        return tuple(e)
+        return e[0] if len(e) == 1 else tuple(e)
 
 
 class Dataset(BaseDataset):

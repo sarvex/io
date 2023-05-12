@@ -118,7 +118,7 @@ def buckets_insert():
         )
     if testbench_utils.has_bucket(bucket_name):
         raise error_response.ErrorResponse(
-            "Bucket %s already exists" % bucket_name, status_code=400
+            f"Bucket {bucket_name} already exists", status_code=400
         )
     bucket = gcs_bucket.GcsBucket(base_url, bucket_name)
     testbench_utils.insert_bucket(bucket_name, bucket)
@@ -160,7 +160,7 @@ def objects_list(bucket_name):
     delimiter = flask.request.args.get("delimiter", "", str)
     start_offset = flask.request.args.get("startOffset", "", str)
     end_offset = flask.request.args.get("endOffset", "", str)
-    bucket_link = bucket_name + "/o/"
+    bucket_link = f"{bucket_name}/o/"
     for name, o in testbench_utils.all_objects():
         if name.find(bucket_link + prefix) != 0:
             continue
@@ -202,7 +202,7 @@ def objects_copy(source_bucket, source_object, destination_bucket, destination_o
     source_revision = blob.get_revision(flask.request, "sourceGeneration")
     if source_revision is None:
         raise error_response.ErrorResponse(
-            "Revision not found %s" % object_path, status_code=404
+            f"Revision not found {object_path}", status_code=404
         )
 
     destination_path, destination = testbench_utils.get_object(
@@ -249,16 +249,16 @@ def objects_get_common(bucket_name, object_name, revision):
     if range_header is not None:
         m = re.match("bytes=([0-9]+)-([0-9]+)", range_header)
         if m:
-            begin = int(m.group(1))
-            end = int(m.group(2))
+            begin = int(m[1])
+            end = int(m[2])
             response_payload = response_payload[begin : end + 1]
         m = re.match("bytes=([0-9]+)-$", range_header)
         if m:
-            begin = int(m.group(1))
+            begin = int(m[1])
             response_payload = response_payload[begin:]
         m = re.match("bytes=-([0-9]+)$", range_header)
         if m:
-            last = int(m.group(1))
+            last = int(m[1])
             response_payload = response_payload[-last:]
     # Process custom headers to test error conditions.
     instructions = flask.request.headers.get("x-goog-testbench-instructions")
@@ -351,7 +351,7 @@ def objects_get_common(bucket_name, object_name, revision):
         if instructions.endswith("/retry-2"):
             print("## Return error for retry 2")
             return flask.Response("Service Unavailable", status=503)
-        print("## Return success for %s" % instructions)
+        print(f"## Return success for {instructions}")
         return flask.Response(response_payload, status=200, headers=headers)
 
     response = flask.make_response(response_payload)
@@ -368,8 +368,7 @@ def objects_delete(bucket_name, object_name):
     """Implement the 'Objects: delete' API.  Delete objects."""
     object_path, blob = testbench_utils.lookup_object(bucket_name, object_name)
     blob.check_preconditions(flask.request)
-    remove = blob.del_revision(flask.request)
-    if remove:
+    if remove := blob.del_revision(flask.request):
         testbench_utils.delete_object(object_path)
     return testbench_utils.filtered_response(flask.request, {})
 
@@ -403,7 +402,7 @@ def objects_compose(bucket_name, object_name):
             source_revision = source_blob.get_revision_by_generation(generation)
             if source_revision is None:
                 raise error_response.ErrorResponse(
-                    "No such object: %s" % source_object_path, status_code=404
+                    f"No such object: {source_object_path}", status_code=404
                 )
         object_preconditions = source_object.get("objectPreconditions")
         if object_preconditions is not None:
@@ -447,7 +446,7 @@ def objects_get(bucket_name, object_name):
     if media is None or media == "json":
         return testbench_utils.filtered_response(flask.request, revision.metadata)
     if media != "media":
-        raise error_response.ErrorResponse("Invalid alt=%s parameter" % media)
+        raise error_response.ErrorResponse(f"Invalid alt={media} parameter")
     revision.validate_encryption_for_read(flask.request)
     return objects_get_common(bucket_name, object_name, revision)
 
@@ -478,7 +477,8 @@ def objects_insert(bucket_name):
         )
     if upload_type not in {"multipart", "media", "resumable"}:
         raise error_response.ErrorResponse(
-            "testbench does not support %s uploadType" % upload_type, status_code=400
+            f"testbench does not support {upload_type} uploadType",
+            status_code=400,
         )
 
     if upload_type == "resumable":

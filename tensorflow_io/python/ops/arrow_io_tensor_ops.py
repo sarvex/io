@@ -153,20 +153,15 @@ class ArrowIOResource:
             array_tuple = _extract_table_arrays(table)
             array_buffer_addrs, array_buffer_sizes, array_lengths = array_tuple
 
-            # Create the Arrow readable resource op
-            resource_op = core_ops.io_arrow_readable_from_memory_init(
+            return core_ops.io_arrow_readable_from_memory_init(
                 schema_buffer_addr,
                 schema_buffer_size,
                 array_buffer_addrs,
                 array_buffer_sizes,
                 array_lengths,
                 container=scope,
-                shared_name="pyarrow.Table{}/{}".format(
-                    table.schema.names, uuid.uuid4().hex
-                ),
+                shared_name=f"pyarrow.Table{table.schema.names}/{uuid.uuid4().hex}",
             )
-
-            return resource_op
 
 
 class _ArrowIOTensorComponentFunction:
@@ -251,9 +246,9 @@ class ArrowIOTensor(io_tensor_ops._TableIOTensor):  # pylint: disable=protected-
         # Get the ArrowIOTensor init resource op
         resource = arrow_resource.resource_op
 
+        # Create a BaseIOTensor for each column
+        elements = []
         if tf.executing_eagerly():
-            # Create a BaseIOTensor for each column
-            elements = []
             columns = table.column_names
             for column_index, column in enumerate(columns):
                 shape, dtype = core_ops.io_arrow_readable_spec(
@@ -305,7 +300,6 @@ class ArrowIOTensor(io_tensor_ops._TableIOTensor):  # pylint: disable=protected-
                 for (dtype, (column_index, column)) in zip(dtypes, columns)
             ]
 
-            elements = []
             for ((column_index, column), entry, shape) in zip(columns, entries, shapes):
                 function = _ArrowIOTensorComponentFunction(
                     core_ops.io_arrow_readable_read,

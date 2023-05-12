@@ -63,9 +63,10 @@ class _IOTensorIterablePartitionedFunction:
         while self._length is None:
             # if stop is not None then resolved partitions have to cover stop
             # if stop is None then all partitions has to be resolved
-            if stop is not None:
-                if stop <= sum(e.shape[0] for e in self._partitions):
-                    break
+            if stop is not None and stop <= sum(
+                e.shape[0] for e in self._partitions
+            ):
+                break
             # resolve one step
             partition = self._function()
             if partition.shape[0] == 0:
@@ -81,7 +82,7 @@ class _IOTensorIterablePartitionedFunction:
         index = slice(start, stop)
         start, stop, _ = index.indices(length)
         if start >= length:
-            raise IndexError("index %s is out of range" % index)
+            raise IndexError(f"index {index} is out of range")
         indices_start = tf.math.maximum(self._partitions_start, start)
         indices_stop = tf.math.minimum(self._partitions_stop, stop)
         indices_hit = tf.math.less(indices_start, indices_stop)
@@ -247,6 +248,8 @@ class BaseIOTensor(_IOTensor):
             self.dtype,
         )
 
+
+
         class _Function:
             """_Function"""
 
@@ -259,7 +262,7 @@ class BaseIOTensor(_IOTensor):
             def __call__(self, start, stop):
                 start, stop, _ = slice(start, stop).indices(self._length)
                 if start >= self._length:
-                    raise IndexError("index %s is out of range" % slice(start, stop))
+                    raise IndexError(f"index {slice(start, stop)} is out of range")
                 return tf.reshape(
                     tf.image.extract_patches(
                         tf.reshape(
@@ -273,6 +276,7 @@ class BaseIOTensor(_IOTensor):
                     ),
                     self._spec.shape,
                 )
+
 
         return BaseIOTensor(spec, _Function(self._function, spec, size), internal=True)
 
@@ -341,6 +345,8 @@ class TensorIOTensor(BaseIOTensor):
     def __init__(self, tensor, internal=False):
         tensor = tf.convert_to_tensor(tensor)
 
+
+
         class _Function:
             """_Function"""
 
@@ -353,7 +359,7 @@ class TensorIOTensor(BaseIOTensor):
             def __call__(self, start, stop):
                 start, stop, _ = slice(start, stop).indices(self._length)
                 if start >= self._length:
-                    raise IndexError("index %s is out of range" % slice(start, stop))
+                    raise IndexError(f"index {slice(start, stop)} is out of range")
                 slice_start = self._base_start
                 slice_size = self._base_size
                 slice_start[0] = start
@@ -363,6 +369,7 @@ class TensorIOTensor(BaseIOTensor):
             @property
             def length(self):
                 return self._length
+
 
         self._tensor = tensor
 

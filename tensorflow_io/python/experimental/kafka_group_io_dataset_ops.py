@@ -160,15 +160,13 @@ class KafkaGroupIODataset(tf.data.Dataset):
                 stream_timeout = max(stream_timeout, message_poll_timeout)
             else:
                 raise ValueError(
-                    "Invalid stream_timeout value: {} ,set it to -1 to block indefinitely.".format(
-                        stream_timeout
-                    )
+                    f"Invalid stream_timeout value: {stream_timeout} ,set it to -1 to block indefinitely."
                 )
             metadata = list(configuration or [])
             if group_id is not None:
-                metadata.append("group.id=%s" % group_id)
+                metadata.append(f"group.id={group_id}")
             if servers is not None:
-                metadata.append("bootstrap.servers=%s" % servers)
+                metadata.append(f"bootstrap.servers={servers}")
             resource = core_ops.io_kafka_group_readable_init(
                 topics=topics, metadata=metadata
             )

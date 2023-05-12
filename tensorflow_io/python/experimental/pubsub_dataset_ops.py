@@ -28,7 +28,7 @@ class PubSubStreamIODataset(tf.data.Dataset):
 
             metadata = []
             if endpoint is not None:
-                metadata.append("endpoint=%s" % endpoint)
+                metadata.append(f"endpoint={endpoint}")
             metadata.append("timeout=%d" % timeout)
             resource = core_ops.io_pub_sub_readable_init(subscription, metadata)
 

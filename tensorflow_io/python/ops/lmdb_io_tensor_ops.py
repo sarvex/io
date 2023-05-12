@@ -48,6 +48,8 @@ class LMDBIOTensor(io_tensor_ops._KeyValueIOTensor):  # pylint: disable=protecte
                 tf.TensorSpec(tf.TensorShape([None]), tf.string),
             )
 
+
+
             class _IterableInit:
                 def __init__(self, func, filename):
                     self._func = func
@@ -58,10 +60,9 @@ class LMDBIOTensor(io_tensor_ops._KeyValueIOTensor):  # pylint: disable=protecte
                         return self._func(
                             self._filename,
                             container=scope,
-                            shared_name="{}/{}".format(
-                                self._filename, uuid.uuid4().hex
-                            ),
+                            shared_name=f"{self._filename}/{uuid.uuid4().hex}",
                         )
+
 
             class _IterableNext:
                 def __init__(self, func, shape, dtype):

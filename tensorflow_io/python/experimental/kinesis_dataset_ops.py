@@ -57,8 +57,7 @@ class KinesisIODataset(tf.data.Dataset):
         with tf.name_scope("KinesisIODataset"):
             assert internal
 
-            metadata = []
-            metadata.append("shard=%s" % shard)
+            metadata = [f"shard={shard}"]
             resource = core_ops.io_kinesis_readable_init(stream, metadata)
 
             self._resource = resource

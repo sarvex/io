@@ -29,7 +29,7 @@ class AvroIOTensor(io_tensor_ops._TableIOTensor):  # pylint: disable=protected-a
     # =============================================================================
     def __init__(self, filename, schema, internal=False):
         with tf.name_scope("AvroIOTensor") as scope:
-            metadata = ["schema: %s" % schema]
+            metadata = [f"schema: {schema}"]
             resource, columns = core_ops.io_avro_readable_init(
                 filename,
                 metadata=metadata,

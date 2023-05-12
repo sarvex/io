@@ -60,9 +60,8 @@ def deprecate(message):
 
         if cls is None:
             return new_func
-        else:
-            # Insert the wrapped function as the constructor
-            setattr(cls, constructor_name, new_func)
-            return cls
+        # Insert the wrapped function as the constructor
+        setattr(cls, constructor_name, new_func)
+        return cls
 
     return deprecated_wrapper

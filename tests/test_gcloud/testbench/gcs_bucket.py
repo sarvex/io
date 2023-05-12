@@ -47,9 +47,7 @@ class GcsBucket:
     def versioning_enabled(self):
         """Return True if versioning is enabled for this Bucket."""
         v = self.metadata.get("versioning", None)
-        if v is None:
-            return False
-        return v.get("enabled", False)
+        return False if v is None else v.get("enabled", False)
 
     def check_preconditions(self, request):
         """Verify that the preconditions in request are met.
@@ -70,13 +68,13 @@ class GcsBucket:
             and metageneration_not_match == metageneration
         ):
             raise error_response.ErrorResponse(
-                "Precondition Failed (metageneration = %s)" % metageneration,
+                f"Precondition Failed (metageneration = {metageneration})",
                 status_code=412,
             )
 
         if metageneration_match is not None and metageneration_match != metageneration:
             raise error_response.ErrorResponse(
-                "Precondition Failed (metageneration = %s)" % metageneration,
+                f"Precondition Failed (metageneration = {metageneration})",
                 status_code=412,
             )
 
@@ -90,11 +88,12 @@ class GcsBucket:
         x_upload_content_type = request.headers.get(
             "x-upload-content-type", "application/octet-stream"
         )
-        x_upload_content_length = request.headers.get("x-upload-content-length")
-        expected_bytes = None
-        if x_upload_content_length:
+        if x_upload_content_length := request.headers.get(
+            "x-upload-content-length"
+        ):
             expected_bytes = int(x_upload_content_length)
-
+        else:
+            expected_bytes = None
         if request.args.get("name") is not None and len(request.data):
             raise error_response.ErrorResponse(
                 "The name argument is only supported for empty payloads",
@@ -153,7 +152,7 @@ class GcsBucket:
         upload = self.resumable_uploads.get(upload_id)
         if upload is None:
             raise error_response.ErrorResponse(
-                "Cannot find resumable upload %s" % upload_id, status_code=404
+                f"Cannot find resumable upload {upload_id}", status_code=404
             )
         # Be gracious in what you accept, if the Content-Range header is not
         # set we assume it is a good header and it is the end of the file.
@@ -173,26 +172,25 @@ class GcsBucket:
                     response.headers["Range"] = "bytes=0-%d" % (next_byte - 1)
                 response.status_code = 200 if upload["done"] else 308
                 return response
-            match = re.match(r"bytes \*/(\*|[0-9]+)", content_range)
-            if match:
-                if match.group(1) == "*":
+            if match := re.match(r"bytes \*/(\*|[0-9]+)", content_range):
+                if match[1] == "*":
                     total = 0
                 else:
-                    total = int(match.group(1))
+                    total = int(match[1])
                     final_chunk = True
             else:
                 match = re.match(r"bytes ([0-9]+)-([0-9]+)\/(\*|[0-9]+)", content_range)
                 if not match:
                     raise error_response.ErrorResponse(
-                        "Invalid Content-Range in upload %s" % content_range,
+                        f"Invalid Content-Range in upload {content_range}",
                         status_code=400,
                     )
-                begin = int(match.group(1))
-                end = int(match.group(2))
-                if match.group(3) == "*":
+                begin = int(match[1])
+                end = int(match[2])
+                if match[3] == "*":
                     total = 0
                 else:
-                    total = int(match.group(3))
+                    total = int(match[3])
                     final_chunk = True
 
                 if begin != next_byte:
@@ -251,8 +249,5 @@ class GcsBucket:
             response.headers["Range"] = "bytes=0-0"
         else:
             response.headers["Range"] = "bytes=0-%d" % (next_byte - 1)
-        if upload.get("done", False):
-            response.status_code = 200
-        else:
-            response.status_code = 308
+        response.status_code = 200 if upload.get("done", False) else 308
         return response

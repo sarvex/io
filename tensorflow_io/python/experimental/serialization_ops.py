@@ -96,7 +96,7 @@ def process_primitive(data, name):
 def process_record(data, name):
     """process_record"""
     return {
-        v["name"]: process_entry(v, "{}/{}".format(name, v["name"]))
+        v["name"]: process_entry(v, f'{name}/{v["name"]}')
         for v in data["fields"]
     }
 
@@ -173,5 +173,4 @@ def encode_avro(data, schema, name=None):
 
     data = tf.nest.flatten(data)
 
-    values = core_ops.io_encode_avro(data, names, schema, name=name)
-    return values
+    return core_ops.io_encode_avro(data, names, schema, name=name)

@@ -41,7 +41,7 @@ class GRPCEndpoint(endpoint_pb2_grpc.GRPCEndpointServicer):
             concurrent.futures.ThreadPoolExecutor(max_workers=4)
         )
         port = self._grpc_server.add_insecure_port("localhost:0")
-        self._endpoint = "localhost:" + str(port)
+        self._endpoint = f"localhost:{str(port)}"
         self._data = data
         super().__init__()
         endpoint_pb2_grpc.add_GRPCEndpointServicer_to_server(self, self._grpc_server)

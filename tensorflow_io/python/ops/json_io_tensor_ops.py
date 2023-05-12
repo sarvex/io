@@ -29,7 +29,7 @@ class JSONIOTensor(io_tensor_ops._TableIOTensor):  # pylint: disable=protected-a
     # =============================================================================
     def __init__(self, filename, mode=None, internal=False):
         with tf.name_scope("JSONIOTensor") as scope:
-            metadata = [] if mode is None else ["mode: %s" % mode]
+            metadata = [] if mode is None else [f"mode: {mode}"]
             resource, columns = core_ops.io_json_readable_init(
                 filename,
                 metadata=metadata,

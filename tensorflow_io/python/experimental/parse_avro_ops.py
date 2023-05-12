@@ -83,7 +83,7 @@ def parse_avro(serialized, reader_schema, features, avro_names=None, name=None):
         A map of feature names to tensors.
     """
     if not features:
-        raise ValueError("Missing: features was %s." % features)
+        raise ValueError(f"Missing: features was {features}.")
     features = _build_keys_for_sparse_features(features)
     (
         sparse_keys,
@@ -243,7 +243,7 @@ def _build_keys_for_sparse_features(features):
 
     def resolve_key(parser_key, index_or_value_key):
         if not index_or_value_key.startswith("@"):
-            return parser_key + "[*]." + index_or_value_key
+            return f"{parser_key}[*].{index_or_value_key}"
         return index_or_value_key[1:]
 
     def resolve_index_key(key_, index_key):
@@ -291,7 +291,7 @@ def construct_tensors_for_composite_features(features, tensor_dict):
     # Process updates after all composite tensors have been constructed (in case
     # multiple features use the same value_key, and one uses that key as its
     # feature key).
-    tensor_dict.update(updates)
+    tensor_dict |= updates
 
     # Remove tensors from dictionary that were only used to construct
     # tensors for SparseFeature or RaggedTensor.
@@ -376,9 +376,9 @@ def _handle_fixedlen_feature(
     if tf.io.FixedLenFeature not in types:
         raise ValueError(f"Unsupported FixedLenFeature {feature}.")
     if not feature.dtype:
-        raise ValueError("Missing type for feature %s." % key)
+        raise ValueError(f"Missing type for feature {key}.")
     if feature.shape is None:
-        raise ValueError("Missing shape for feature %s." % key)
+        raise ValueError(f"Missing shape for feature {key}.")
     dense_keys.append(key)
     dense_shapes.append(feature.shape)
     dense_types.append(feature.dtype)
@@ -397,7 +397,7 @@ def _handle_sparse_feature(
     if not feature.value_key:
         raise ValueError(f"Missing value_key for SparseFeature {feature}.")
     if not feature.dtype:
-        raise ValueError("Missing type for feature %s." % key)
+        raise ValueError(f"Missing type for feature {key}.")
     index_keys = feature.index_key
     if isinstance(index_keys, str):
         index_keys = [index_keys]
@@ -411,11 +411,7 @@ def _handle_sparse_feature(
         if index_key in sparse_keys:
             dtype = sparse_types[sparse_keys.index(index_key)]
             if dtype != tf.int64:
-                raise ValueError(
-                    "Conflicting type {} vs int64 for feature {}.".format(
-                        dtype, index_key
-                    )
-                )
+                raise ValueError(f"Conflicting type {dtype} vs int64 for feature {index_key}.")
         else:
             sparse_keys.append(index_key)
             sparse_types.append(tf.int64)
@@ -426,8 +422,7 @@ def _handle_sparse_feature(
         dtype = sparse_types[sparse_keys.index(feature.value_key)]
         if dtype != feature.dtype:
             raise ValueError(
-                "Conflicting type %s vs %s for feature %s."
-                % (dtype, feature.dtype, feature.value_key)
+                f"Conflicting type {dtype} vs {feature.dtype} for feature {feature.value_key}."
             )
     else:
         sparse_keys.append(feature.value_key)
@@ -444,9 +439,9 @@ def _handle_varlen_feature(
     if tensorflow_io.experimental.columnar.VarLenFeatureWithRank not in types:
         raise ValueError(f"Unsupported VarLenFeatureWithRank {feature}.")
     if not feature.dtype:
-        raise ValueError("Missing type for VarLenFeatureWithRank %s." % key)
+        raise ValueError(f"Missing type for VarLenFeatureWithRank {key}.")
     if not feature.rank:
-        raise ValueError("Missing rank for VarLenFeatureWithRank %s." % key)
+        raise ValueError(f"Missing rank for VarLenFeatureWithRank {key}.")
     sparse_keys.append(key)
     sparse_types.append(feature.dtype)
     sparse_ranks.append(feature.rank)
@@ -534,8 +529,7 @@ def _process_raw_parameters(
         raise ValueError("Must provide at least one sparse key or dense key")
     if not set(dense_keys).isdisjoint(set(sparse_keys)):
         raise ValueError(
-            "Dense and sparse keys must not intersect; intersection: %s"
-            % set(dense_keys).intersection(set(sparse_keys))
+            f"Dense and sparse keys must not intersect; intersection: {set(dense_keys).intersection(set(sparse_keys))}"
         )
 
     # Convert dense_shapes to TensorShape object.

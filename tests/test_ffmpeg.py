@@ -45,7 +45,7 @@ def test_ffmpeg_io_tensor_audio(audio_path):
     assert audio.dtype == ffmpeg.dtype
     assert audio.rate == ffmpeg.rate
     assert audio.shape[1] == ffmpeg.shape[1]
-    assert np.all(audio[0:5760].numpy() == ffmpeg[0:5760].numpy())
+    assert np.all(audio[:5760].numpy() == ffmpeg[:5760].numpy())
     assert len(audio) == len(ffmpeg)
 
 

@@ -34,7 +34,7 @@ class PrometheusIODataset(tf.data.Dataset):
             if offset is not None:
                 metadata.append("offset=%d" % offset)
             if endpoint is not None:
-                metadata.append("endpoint=%s" % endpoint)
+                metadata.append(f"endpoint={endpoint}")
             resource, metrics = golang_ops.io_prometheus_readable_init(query, metadata)
             # Construct spec in eager mode, and take spec from user in graph mode.
             if spec is None:
@@ -56,7 +56,6 @@ class PrometheusIODataset(tf.data.Dataset):
                             )
                         spec_by_job[instance] = spec_by_instance
                     spec[job] = spec_by_job
-            # Map spec to entries of 3 tuple (job, instance, name)
             class MetricEntry:
                 def __init__(self, job, instance, name):
                     self.job = job

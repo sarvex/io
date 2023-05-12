@@ -31,7 +31,7 @@ def test_avro():
     filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_avro", "test.bin"
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     schema_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_avro", "cpx.json"
@@ -80,7 +80,7 @@ def test_avro_partition():
     filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_avro", "test.bin"
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     schema_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_avro", "cpx.json"
@@ -111,7 +111,7 @@ def test_avro_dataset_partition():
     filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_avro", "test.bin"
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     schema_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_avro", "cpx.json"

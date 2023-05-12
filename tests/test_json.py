@@ -28,11 +28,11 @@ def test_io_tensor_json_recods_mode():
     feature_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "feature.json"
     )
-    feature_filename = "file://" + feature_filename
+    feature_filename = f"file://{feature_filename}"
     label_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "label.json"
     )
-    label_filename = "file://" + label_filename
+    label_filename = f"file://{label_filename}"
 
     features = tfio.IOTensor.from_json(feature_filename, mode="records")
     assert features("floatfeature").dtype == tf.float64
@@ -89,11 +89,11 @@ def test_io_tensor_json():
     feature_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "feature.ndjson"
     )
-    feature_filename = "file://" + feature_filename
+    feature_filename = f"file://{feature_filename}"
     label_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "label.ndjson"
     )
-    label_filename = "file://" + label_filename
+    label_filename = f"file://{label_filename}"
 
     features = tfio.IOTensor.from_json(feature_filename)
     assert features("floatfeature").dtype == tf.float64
@@ -141,11 +141,11 @@ def test_json_dataset():
     feature_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "feature.json"
     )
-    feature_filename = "file://" + feature_filename
+    feature_filename = f"file://{feature_filename}"
     label_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "label.json"
     )
-    label_filename = "file://" + label_filename
+    label_filename = f"file://{label_filename}"
 
     feature_dataset = tfio.IODataset.from_json(
         feature_filename, ["floatfeature", "integerfeature"], mode="records"
@@ -174,11 +174,11 @@ def test_json_keras():
     feature_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "iris.json"
     )
-    feature_filename = "file://" + feature_filename
+    feature_filename = f"file://{feature_filename}"
     label_filename = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "test_json", "species.json"
     )
-    label_filename = "file://" + label_filename
+    label_filename = f"file://{label_filename}"
 
     feature_cols = ["sepalLength", "sepalWidth", "petalLength", "petalWidth"]
     label_cols = ["species"]

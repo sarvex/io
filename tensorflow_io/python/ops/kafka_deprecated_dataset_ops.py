@@ -167,7 +167,7 @@ class KafkaOutputSequence:
         self._topic = topic
         metadata = list(configuration or [])
         if servers is not None:
-            metadata.append("bootstrap.servers=%s" % servers)
+            metadata.append(f"bootstrap.servers={servers}")
         self._resource = core_ops.io_kafka_output_sequence(
             topic=topic, metadata=metadata
         )

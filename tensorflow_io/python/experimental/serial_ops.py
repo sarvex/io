@@ -125,14 +125,13 @@ def build_header(dataset):
     """Build header dictionary of metadata for the tensors in the dataset. This will be used when loading
     the tfrecords file to reconstruct the original tensors from the raw data. Shape is stored as an array
     and dtype is stored as an enumerated value (defined by tensorflow)."""
-    header = {}
-    for key in dataset.element_spec.keys():
-        header[key] = {
+    return {
+        key: {
             "shape": list(dataset.element_spec[key].shape),
             "dtype": dataset.element_spec[key].dtype.as_datatype_enum,
         }
-
-    return header
+        for key in dataset.element_spec.keys()
+    }
 
 
 def build_feature_desc(header):
@@ -142,13 +141,12 @@ def build_feature_desc(header):
     Assumes FixedLenFeatures.
     If you got VarLenFeatures I feel bad for you son,
     I got 115 problems but a VarLenFeature ain't one."""
-    feature_desc = {}
-    for key, params in header.items():
-        feature_desc[key] = tf.io.FixedLenFeature(
+    return {
+        key: tf.io.FixedLenFeature(
             shape=params["shape"], dtype=base_type(int(params["dtype"]))
         )
-
-    return feature_desc
+        for key, params in header.items()
+    }
 
 
 def dataset_to_examples(ds):
@@ -196,6 +194,4 @@ def load_dataset(tfrecord_path, header_path):
 
     feature_desc = build_feature_desc(header)
     parse_func = functools.partial(tf.io.parse_single_example, features=feature_desc)
-    dataset = tf.data.TFRecordDataset(tfrecord_path).map(parse_func)
-
-    return dataset
+    return tf.data.TFRecordDataset(tfrecord_path).map(parse_func)

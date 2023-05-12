@@ -59,8 +59,7 @@ def _create_or_validate_filenames_dataset(filenames):
         filenames = tf.convert_to_tensor(filenames, dtype_hint=tf.string)
         if filenames.dtype != tf.string:
             raise TypeError(
-                "`filenames` must be a `tf.Tensor` of dtype `tf.string` dtype."
-                " Got {}".format(filenames.dtype)
+                f"`filenames` must be a `tf.Tensor` of dtype `tf.string` dtype. Got {filenames.dtype}"
             )
         filenames = tf.reshape(filenames, [-1], name="flat_filenames")
         filenames = tf.data.Dataset.from_tensor_slices(filenames)

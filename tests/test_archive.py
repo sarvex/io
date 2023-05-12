@@ -27,7 +27,7 @@ def test_gz():
         "test_parquet",
         "parquet_cpp_example.parquet.gz",
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     (
         format,  # pylint: disable=redefined-builtin
@@ -44,7 +44,7 @@ def test_gz():
         "test_parquet",
         "parquet_cpp_example.parquet",
     )
-    expected_filename = "file://" + expected_filename
+    expected_filename = f"file://{expected_filename}"
 
     assert elements[0].numpy() == tf.io.read_file(expected_filename).numpy()
 
@@ -56,7 +56,7 @@ def test_none():
         "test_parquet",
         "parquet_cpp_example.parquet",
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     (
         format,  # pylint: disable=redefined-builtin
@@ -78,7 +78,7 @@ def test_tar_gz():
         "test_parquet",
         "parquet_cpp_example.parquet.tar.gz",
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     (
         format,  # pylint: disable=redefined-builtin
@@ -97,7 +97,7 @@ def test_tar_gz():
         "test_parquet",
         "parquet_cpp_example.parquet",
     )
-    expected_filename = "file://" + expected_filename
+    expected_filename = f"file://{expected_filename}"
 
     assert elements[0].numpy() == tf.io.read_file(expected_filename).numpy()
     assert elements[1].numpy() == tf.io.read_file(expected_filename).numpy()
@@ -110,7 +110,7 @@ def test_dataset():
         "test_parquet",
         "parquet_cpp_example.parquet.tar.gz",
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     # This is a demo implementation of ArchiveDataset
     dataset = (
@@ -132,7 +132,7 @@ def test_dataset():
         "test_parquet",
         "parquet_cpp_example.parquet",
     )
-    expected_filename = "file://" + expected_filename
+    expected_filename = f"file://{expected_filename}"
 
     i = 0
     for entry in dataset:

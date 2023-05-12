@@ -158,7 +158,7 @@ class BigQueryClient:
                 mode = selected_fields[field].get("mode", self.FieldMode.NULLABLE)
                 if mode == self.FieldMode.REPEATED:
                     selected_fields_repeated.append(True)
-                elif mode == self.FieldMode.NULLABLE or mode == self.FieldMode.REQUIRED:
+                elif mode in [self.FieldMode.NULLABLE, self.FieldMode.REQUIRED]:
                     selected_fields_repeated.append(False)
                 else:
                     raise ValueError(
@@ -343,14 +343,14 @@ class _BigQueryDataset(dataset_ops.DatasetSource):
         selected_fields_repeated = list(selected_fields_repeated)
         output_types = list(output_types)
 
-        tensor_shapes = list(
+        tensor_shapes = [
             [
                 None,
             ]
             if repeated
             else []
             for repeated in selected_fields_repeated
-        )
+        ]
 
         self._element_spec = collections.OrderedDict(
             zip(

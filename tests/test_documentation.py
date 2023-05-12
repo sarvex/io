@@ -33,11 +33,11 @@ def extract_block(filename, lang):
         hit = -1
         for line in f:
             if hit < 0:
-                if line.strip().startswith("```" + lang):
-                    hit = line.find("```" + lang)
+                if line.strip().startswith(f"```{lang}"):
+                    hit = line.find(f"```{lang}")
+            elif line.strip().startswith("```") and line.find("```") == hit:
+                break
             else:
-                if line.strip().startswith("```") and line.find("```") == hit:
-                    break
                 source += line
     return source
 

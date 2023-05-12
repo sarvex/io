@@ -69,11 +69,11 @@ def arrow_to_tensor_type(pa_t):
         tf_t = dtypes.string
     elif pa.types.is_list(pa_t):
         if pa.types.is_list(pa_t.value_type):
-            raise TypeError("Nested arrays are not currently supported: " + str(pa_t))
+            raise TypeError(f"Nested arrays are not currently supported: {str(pa_t)}")
         tf_t, shape_dims = arrow_to_tensor_type(pa_t.value_type)
         shape_dims.append(None)  # pyarrow scalar arrays can be variable length
     else:
-        raise TypeError("Unsupported type in conversion from Arrow: " + str(pa_t))
+        raise TypeError(f"Unsupported type in conversion from Arrow: {str(pa_t)}")
     return tf_t, shape_dims
 
 
@@ -115,9 +115,7 @@ class ArrowBaseDataset(dataset_ops.DatasetV2):
         )
         if batch_mode not in self.batch_modes_supported:
             raise ValueError(
-                "Unsupported batch_mode: '{}', must be one of {}".format(
-                    batch_mode, self.batch_modes_supported
-                )
+                f"Unsupported batch_mode: '{batch_mode}', must be one of {self.batch_modes_supported}"
             )
         self._batch_mode = tf.convert_to_tensor(
             batch_mode, dtypes.string, name="batch_mode"

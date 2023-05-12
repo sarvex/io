@@ -249,7 +249,7 @@ def fixture_kafka():
         v = tfio.IOTensor.from_kafka(q)
         return v
 
-    expected = [("D" + str(i)).encode() for i in range(10)]
+    expected = [f"D{str(i)}".encode() for i in range(10)]
 
     return args, func, expected, np.array_equal
 
@@ -586,7 +586,7 @@ def test_io_tensor_slice_in_dataset(
     # The following is purely for explanation purposes.
     @tf.function
     def g(e):
-        return func(e)[0:100]
+        return func(e)[:100]
 
     dataset = tf.data.Dataset.from_tensor_slices([args, args])
     dataset = dataset.map(g, num_parallel_calls=num_parallel_calls)

@@ -30,7 +30,7 @@ class KafkaIOTensor:
 
             metadata = list(configuration or [])
             if servers is not None:
-                metadata.append("bootstrap.servers=%s" % servers)
+                metadata.append(f"bootstrap.servers={servers}")
             resource = core_ops.io_kafka_readable_init(
                 topic, partition, offset=0, metadata=metadata
             )
@@ -56,9 +56,7 @@ class KafkaIOTensor:
     # String Encoding
     # =============================================================================
     def __repr__(self):
-        return "<{}: shape={}, dtype={}>".format(
-            self.__class__.__name__, self.shape, self.dtype
-        )
+        return f"<{self.__class__.__name__}: shape={self.shape}, dtype={self.dtype}>"
 
     # =============================================================================
     # Tensor Type Conversions
@@ -88,5 +86,5 @@ class KafkaIOTensor:
             return item
         item, _ = core_ops.io_kafka_readable_read(self._resource, key, key + 1)
         if tf.shape(item)[0] == 0:
-            raise IndexError("index %s is out of range" % key)
+            raise IndexError(f"index {key} is out of range")
         return item[0]

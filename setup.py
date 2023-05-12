@@ -14,6 +14,7 @@
 # ==============================================================================
 """Setup for pip package."""
 
+
 import os
 import sys
 import shutil
@@ -29,8 +30,8 @@ with open(os.path.join(here, "tensorflow_io/python/ops/version_ops.py")) as f:
     entries = [e.strip() for e in f.readlines() if not e.startswith("#")]
     assert sum(e.startswith("version = ") for e in entries) == 1
     assert sum(e.startswith("require = ") for e in entries) == 1
-    version = list(e[10:] for e in entries if e.startswith("version = "))[0].strip('"')
-    require = list(e[10:] for e in entries if e.startswith("require = "))[0].strip('"')
+    version = [e[10:] for e in entries if e.startswith("version = ")][0].strip('"')
+    require = [e[10:] for e in entries if e.startswith("require = ")][0].strip('"')
     assert version != ""
     assert require != ""
 
@@ -51,23 +52,22 @@ else:
 assert (
     project.replace("_", "-") == "tensorflow-io"
     or project.replace("_", "-") in subpackages
-), "--project ({} or {}) must be provided, found {}".format(
-    "tensorflow-io", ", ".join(subpackages), project
-)
+), f'--project (tensorflow-io or {", ".join(subpackages)}) must be provided, found {project}'
 project = project.replace("_", "-")
 
 exclude = (
     ["tests", "tests.*"]
     + [e.replace("-", "_") for e in subpackages if e != project]
-    + ["{}.*".format(e.replace("-", "_")) for e in subpackages if e != project]
-    + (["tensorflow_io", "tensorflow_io.*"] if project != "tensorflow-io" else [])
+    + [f'{e.replace("-", "_")}.*' for e in subpackages if e != project]
+) + (
+    ["tensorflow_io", "tensorflow_io.*"] if project != "tensorflow-io" else []
 )
 project_rootpath = project.replace("-", "_")
 
 if "--nightly" in sys.argv:
     nightly_idx = sys.argv.index("--nightly")
-    version = version + ".dev" + sys.argv[nightly_idx + 1]
-    project = project + "-nightly"
+    version = f"{version}.dev{sys.argv[nightly_idx + 1]}"
+    project = f"{project}-nightly"
     sys.argv.remove("--nightly")
     sys.argv.pop(nightly_idx)
 

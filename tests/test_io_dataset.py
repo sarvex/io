@@ -29,10 +29,7 @@ import tensorflow_io as tfio
 def element_equal(x, y):
     if not isinstance(x, tuple):
         return np.array_equal(x, y)
-    for a, b in zip(list(x), list(y)):
-        if not np.array_equal(a, b):
-            return False
-    return True
+    return all(np.array_equal(a, b) for a, b in zip(list(x), list(y)))
 
 
 def element_slice(e, i, j):
@@ -141,7 +138,7 @@ def fixture_lmdb(request):
 
     args = filename
     func = tfio.IODataset.from_lmdb
-    expected = [(str(i).encode(), str(chr(ord("a") + i)).encode()) for i in range(10)]
+    expected = [(str(i).encode(), chr(ord("a") + i).encode()) for i in range(10)]
 
     return args, func, expected
 
@@ -155,7 +152,7 @@ def fixture_pubsub(request):
 
     os.environ["PUBSUB_EMULATOR_HOST"] = "localhost:8085"
     publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path("pubsub-project", "pubsub_topic_" + channel)
+    topic_path = publisher.topic_path("pubsub-project", f"pubsub_topic_{channel}")
     publisher.create_topic(request={"name": topic_path})
     # print('Topic created: {}'.format(topic))
     subscriber = pubsub_v1.SubscriberClient()
@@ -316,8 +313,8 @@ def fixture_kinesis(request):
     """fixture_kinesis"""
     import boto3  # pylint: disable=import-outside-toplevel
 
-    val = [("D" + str(i)) for i in range(10)]
-    key = [("TensorFlow" + str(i)) for i in range(10)]
+    val = [f"D{str(i)}" for i in range(10)]
+    key = [f"TensorFlow{str(i)}" for i in range(10)]
 
     os.environ["AWS_ACCESS_KEY_ID"] = "ACCESS_KEY"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "SECRET_KEY"
@@ -378,7 +375,7 @@ def fixture_audio_wav():
 
     args = path
     func = lambda args: tfio.IODataset.graph(tf.int16).from_audio(args)
-    expected = [v for _, v in enumerate(value)]
+    expected = list(value)
 
     return args, func, expected
 
@@ -464,7 +461,7 @@ def fixture_audio_flac():
 
     args = path
     func = lambda args: tfio.IODataset.graph(tf.int16).from_audio(args)
-    expected = [v for _, v in enumerate(value)]
+    expected = list(value)
 
     return args, func, expected
 
@@ -515,7 +512,7 @@ def fixture_hdf5(request):
 
     data = list(range(5000))
 
-    string_data = ["D" + str(i) for i in range(5000)]
+    string_data = [f"D{str(i)}" for i in range(5000)]
 
     complex_data = [(1.0 + 2.0j) * i for i in range(5000)]
 
@@ -591,7 +588,7 @@ def fixture_hdf5_graph(request):
 
     data = list(range(5000))
 
-    string_data = ["D" + str(i) for i in range(5000)]
+    string_data = [f"D{str(i)}" for i in range(5000)]
 
     complex_data = [(1.0 + 2.0j) * i for i in range(5000)]
 
@@ -835,7 +832,7 @@ def fixture_kafka():
         v = tfio.IODataset.from_kafka(q)
         return v
 
-    expected = [(("D" + str(i)).encode(), b"") for i in range(10)]
+    expected = [(f"D{str(i)}".encode(), b"") for i in range(10)]
 
     return args, func, expected
 
@@ -883,7 +880,7 @@ def fixture_kafka_stream():
         v = tfio.IODataset.stream().from_kafka(q)
         return v
 
-    expected = [(("D" + str(i)).encode(), b"") for i in range(10)]
+    expected = [(f"D{str(i)}".encode(), b"") for i in range(10)]
 
     return args, func, expected
 
@@ -1026,43 +1023,14 @@ def fixture_video_mp4():
 # This test make sure dataset works in tf.keras inference.
 # The requirement for tf.keras inference is the support of `iter()`:
 #   entries = [e for e in dataset]
-@pytest.mark.parametrize(
-    ("io_dataset_fixture"),
-    [
-        pytest.param("mnist"),
-        pytest.param("mnist_gz"),
-        pytest.param("lmdb"),
-        pytest.param(
-            "prometheus",
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param("audio_wav"),
-        pytest.param("audio_wav_s24"),
-        pytest.param("audio_flac"),
-        pytest.param(
+@pytest.mark.parametrize("io_dataset_fixture", [pytest.param("mnist"), pytest.param("mnist_gz"), pytest.param("lmdb"), pytest.param("prometheus", marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("audio_wav"), pytest.param("audio_wav_s24"), pytest.param("audio_flac"), pytest.param(
             "audio_vorbis",
             marks=[
                 pytest.mark.skipif(
                     sys.platform == "win32", reason="TODO Fail on Windows"
                 ),
             ],
-        ),
-        pytest.param("audio_mp3"),
-        pytest.param(
-            "prometheus_scrape",
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param(
+        ), pytest.param("audio_mp3"), pytest.param("prometheus_scrape", marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param(
             "kinesis",
             marks=[
                 pytest.mark.skipif(
@@ -1070,18 +1038,7 @@ def fixture_video_mp4():
                     reason="TODO Localstack not setup properly on macOS/Windows yet",
                 ),
             ],
-        ),
-        pytest.param("pubsub"),
-        pytest.param("hdf5"),
-        pytest.param("grpc"),
-        pytest.param("numpy"),
-        pytest.param("numpy_structure"),
-        pytest.param("numpy_file_tuple"),
-        pytest.param("numpy_file_dict"),
-        pytest.param("kafka"),
-        pytest.param("kafka_avro"),
-        pytest.param("kafka_stream"),
-        pytest.param(
+        ), pytest.param("pubsub"), pytest.param("hdf5"), pytest.param("grpc"), pytest.param("numpy"), pytest.param("numpy_structure"), pytest.param("numpy_file_tuple"), pytest.param("numpy_file_dict"), pytest.param("kafka"), pytest.param("kafka_avro"), pytest.param("kafka_stream"), pytest.param(
             "sql",
             marks=[
                 pytest.mark.skipif(
@@ -1089,8 +1046,7 @@ def fixture_video_mp4():
                     reason="TODO PostgreSQL not tested on macOS/Windows",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_capture",
             marks=[
                 pytest.mark.skipif(
@@ -1098,8 +1054,7 @@ def fixture_video_mp4():
                     reason="Video capture not enabled",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_mp4",
             marks=[
                 pytest.mark.skipif(
@@ -1107,9 +1062,7 @@ def fixture_video_mp4():
                     reason="TODO Windows is not supported, and TODO: !!!pytest-xdist!!! on macOS",
                 ),
             ],
-        ),
-    ],
-    ids=[
+        )], ids=[
         "mnist",
         "mnist[gz]",
         "lmdb",
@@ -1134,8 +1087,7 @@ def fixture_video_mp4():
         "sql",
         "capture[video]",
         "video[mp4]",
-    ],
-)
+    ])
 def test_io_dataset_basic(fixture_lookup, io_dataset_fixture):
     """test_io_dataset_basic"""
     args, func, expected = fixture_lookup(io_dataset_fixture)
@@ -1144,66 +1096,28 @@ def test_io_dataset_basic(fixture_lookup, io_dataset_fixture):
     entries = list(dataset)
 
     assert len(entries) == len(expected)
-    assert all([element_equal(a, b) for (a, b) in zip(entries, expected)])
+    assert all(element_equal(a, b) for (a, b) in zip(entries, expected))
 
 
 # This test makes sure basic dataset operations (take, batch) work.
-@pytest.mark.parametrize(
-    ("io_dataset_fixture"),
-    [
-        pytest.param("mnist"),
-        pytest.param("mnist_gz"),
-        pytest.param(
+@pytest.mark.parametrize("io_dataset_fixture", [pytest.param("mnist"), pytest.param("mnist_gz"), pytest.param(
             "lmdb",
             marks=[
                 pytest.mark.xfail(reason="TODO"),
             ],
-        ),
-        pytest.param(
-            "prometheus",
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param("audio_wav"),
-        pytest.param("audio_wav_s24"),
-        pytest.param("audio_flac"),
-        pytest.param(
+        ), pytest.param("prometheus", marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("audio_wav"), pytest.param("audio_wav_s24"), pytest.param("audio_flac"), pytest.param(
             "audio_vorbis",
             marks=[
                 pytest.mark.skipif(
                     sys.platform == "win32", reason="TODO Fail on Windows"
                 ),
             ],
-        ),
-        pytest.param("audio_mp3"),
-        pytest.param(
-            "prometheus_scrape",
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param("hdf5"),
-        pytest.param("grpc"),
-        pytest.param("numpy"),
-        pytest.param("numpy_structure"),
-        pytest.param("numpy_file_tuple"),
-        pytest.param("numpy_file_dict"),
-        pytest.param("kafka"),
-        pytest.param("kafka_avro"),
-        pytest.param(
+        ), pytest.param("audio_mp3"), pytest.param("prometheus_scrape", marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("hdf5"), pytest.param("grpc"), pytest.param("numpy"), pytest.param("numpy_structure"), pytest.param("numpy_file_tuple"), pytest.param("numpy_file_dict"), pytest.param("kafka"), pytest.param("kafka_avro"), pytest.param(
             "kafka_stream",
             marks=[
                 pytest.mark.xfail(reason="TODO"),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "sql",
             marks=[
                 pytest.mark.skipif(
@@ -1211,8 +1125,7 @@ def test_io_dataset_basic(fixture_lookup, io_dataset_fixture):
                     reason="TODO PostgreSQL not tested on macOS/Windows",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_capture",
             marks=[
                 pytest.mark.skipif(
@@ -1220,8 +1133,7 @@ def test_io_dataset_basic(fixture_lookup, io_dataset_fixture):
                     reason="Video capture not enabled",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_mp4",
             marks=[
                 pytest.mark.skipif(
@@ -1229,9 +1141,7 @@ def test_io_dataset_basic(fixture_lookup, io_dataset_fixture):
                     reason="TODO Windows is not supported",
                 ),
             ],
-        ),
-    ],
-    ids=[
+        )], ids=[
         "mnist",
         "mnist[gz]",
         "lmdb",
@@ -1254,8 +1164,7 @@ def test_io_dataset_basic(fixture_lookup, io_dataset_fixture):
         "sql",
         "capture[video]",
         "video[mp4]",
-    ],
-)
+    ])
 def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
     """test_io_dataset_basic_operation"""
     args, func, expected = fixture_lookup(io_dataset_fixture)
@@ -1267,7 +1176,9 @@ def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
     entries_taken = list(dataset.take(5))
 
     assert len(entries_taken) == len(expected_taken)
-    assert all([element_equal(a, b) for (a, b) in zip(entries_taken, expected_taken)])
+    assert all(
+        element_equal(a, b) for (a, b) in zip(entries_taken, expected_taken)
+    )
 
     # Test of batch
     indices = list(range(0, len(expected), 3))
@@ -1278,10 +1189,8 @@ def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
 
     assert len(entries_batched) == len(expected_batched)
     assert all(
-        [
-            all([element_equal(i, j) for (i, j) in zip(a, b)])
-            for (a, b) in zip(entries_batched, expected_batched)
-        ]
+        all(element_equal(i, j) for (i, j) in zip(a, b))
+        for (a, b) in zip(entries_batched, expected_batched)
     )
 
 
@@ -1291,47 +1200,19 @@ def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
 #   entries_1 = [e for e in dataset]
 #   entries_2 = [e for e in dataset]
 #   assert entries_1 = entries_2
-@pytest.mark.parametrize(
-    ("io_dataset_fixture"),
-    [
-        pytest.param("mnist"),
-        pytest.param("mnist_gz"),
-        pytest.param(
+@pytest.mark.parametrize("io_dataset_fixture", [pytest.param("mnist"), pytest.param("mnist_gz"), pytest.param(
             "lmdb",
             marks=[
                 pytest.mark.xfail(reason="TODO"),
             ],
-        ),
-        pytest.param(
-            "prometheus",
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param("audio_wav"),
-        pytest.param("audio_wav_s24"),
-        pytest.param("audio_flac"),
-        pytest.param(
+        ), pytest.param("prometheus", marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("audio_wav"), pytest.param("audio_wav_s24"), pytest.param("audio_flac"), pytest.param(
             "audio_vorbis",
             marks=[
                 pytest.mark.skipif(
                     sys.platform == "win32", reason="TODO Fail on Windows"
                 ),
             ],
-        ),
-        pytest.param("audio_mp3"),
-        pytest.param("hdf5"),
-        pytest.param("grpc"),
-        pytest.param("numpy"),
-        pytest.param("numpy_structure"),
-        pytest.param("numpy_file_tuple"),
-        pytest.param("numpy_file_dict"),
-        pytest.param("kafka"),
-        pytest.param("kafka_avro"),
-        pytest.param(
+        ), pytest.param("audio_mp3"), pytest.param("hdf5"), pytest.param("grpc"), pytest.param("numpy"), pytest.param("numpy_structure"), pytest.param("numpy_file_tuple"), pytest.param("numpy_file_dict"), pytest.param("kafka"), pytest.param("kafka_avro"), pytest.param(
             "sql",
             marks=[
                 pytest.mark.skipif(
@@ -1339,8 +1220,7 @@ def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
                     reason="TODO PostgreSQL not tested on macOS/Windows",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_mp4",
             marks=[
                 pytest.mark.skipif(
@@ -1348,9 +1228,7 @@ def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
                     reason="TODO Windows is not supported, and TODO: !!!pytest-xdist!!! on macOS",
                 ),
             ],
-        ),
-    ],
-    ids=[
+        )], ids=[
         "mnist",
         "mnist[gz]",
         "lmdb",
@@ -1370,8 +1248,7 @@ def test_io_dataset_basic_operation(fixture_lookup, io_dataset_fixture):
         "kafka[avro]",
         "sql",
         "video[mp4]",
-    ],
-)
+    ])
 def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
     """test_io_dataset_for_training"""
     args, func, expected = fixture_lookup(io_dataset_fixture)
@@ -1382,66 +1259,31 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
     entries = list(dataset)
 
     assert len(entries) == len(expected)
-    assert all([element_equal(a, b) for (a, b) in zip(entries, expected)])
+    assert all(element_equal(a, b) for (a, b) in zip(entries, expected))
 
     # A re-run of dataset iteration yield the same results, needed for training.
     entries = list(dataset)
 
     assert len(entries) == len(expected)
-    assert all([element_equal(a, b) for (a, b) in zip(entries, expected)])
+    assert all(element_equal(a, b) for (a, b) in zip(entries, expected))
 
 
 # This test makes sure dataset in dataet and parallelism work.
 # It is not needed for tf.keras but could be useful
 # for complex data processing.
-@pytest.mark.parametrize(
-    ("io_dataset_fixture", "num_parallel_calls"),
-    [
-        pytest.param("mnist", None),
-        pytest.param("mnist", 2),
-        pytest.param("mnist_gz", None),
-        pytest.param("mnist_gz", 2),
-        pytest.param(
+@pytest.mark.parametrize(("io_dataset_fixture", "num_parallel_calls"), [pytest.param("mnist", None), pytest.param("mnist", 2), pytest.param("mnist_gz", None), pytest.param("mnist_gz", 2), pytest.param(
             "lmdb",
             None,
             marks=[
                 pytest.mark.skip(reason="TODO"),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "lmdb",
             2,
             marks=[
                 pytest.mark.skip(reason="TODO"),
             ],
-        ),
-        pytest.param(
-            "prometheus_graph",
-            None,
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param(
-            "prometheus_graph",
-            2,
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param("audio_wav", None),
-        pytest.param("audio_wav", 2),
-        pytest.param("audio_wav_s24", None),
-        pytest.param("audio_wav_s24", 2),
-        pytest.param("audio_flac", None),
-        pytest.param("audio_flac", 2),
-        pytest.param(
+        ), pytest.param("prometheus_graph", None, marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("prometheus_graph", 2, marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("audio_wav", None), pytest.param("audio_wav", 2), pytest.param("audio_wav_s24", None), pytest.param("audio_wav_s24", 2), pytest.param("audio_flac", None), pytest.param("audio_flac", 2), pytest.param(
             "audio_vorbis",
             None,
             marks=[
@@ -1449,8 +1291,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
                     sys.platform == "win32", reason="TODO Fail on Windows"
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "audio_vorbis",
             2,
             marks=[
@@ -1458,20 +1299,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
                     sys.platform == "win32", reason="TODO Fail on Windows"
                 ),
             ],
-        ),
-        pytest.param("audio_mp3", None),
-        pytest.param("audio_mp3", 2),
-        pytest.param("hdf5_graph", None),
-        pytest.param("hdf5_graph", 2),
-        pytest.param("numpy_file_tuple_graph", None),
-        pytest.param("numpy_file_tuple_graph", 2),
-        pytest.param("numpy_file_dict_graph", None),
-        pytest.param("numpy_file_dict_graph", 2),
-        pytest.param("kafka", None),
-        pytest.param("kafka", 2),
-        pytest.param("kafka_avro", None),
-        pytest.param("kafka_avro", 2),
-        pytest.param(
+        ), pytest.param("audio_mp3", None), pytest.param("audio_mp3", 2), pytest.param("hdf5_graph", None), pytest.param("hdf5_graph", 2), pytest.param("numpy_file_tuple_graph", None), pytest.param("numpy_file_tuple_graph", 2), pytest.param("numpy_file_dict_graph", None), pytest.param("numpy_file_dict_graph", 2), pytest.param("kafka", None), pytest.param("kafka", 2), pytest.param("kafka_avro", None), pytest.param("kafka_avro", 2), pytest.param(
             "sql_graph",
             None,
             marks=[
@@ -1480,8 +1308,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
                     reason="TODO PostgreSQL not tested on macOS/Windows",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "sql_graph",
             2,
             marks=[
@@ -1490,8 +1317,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
                     reason="TODO PostgreSQL not tested on macOS/Windows",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_mp4",
             None,
             marks=[
@@ -1500,8 +1326,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
                     reason="TODO Windows is not supported, and TODO: !!!pytest-xdist!!! on macOS",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_mp4",
             2,
             marks=[
@@ -1510,9 +1335,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
                     reason="TODO Windows is not supported, and TODO: !!!pytest-xdist!!! on macOS",
                 ),
             ],
-        ),
-    ],
-    ids=[
+        )], ids=[
         "mnist",
         "mnist|2",
         "mnist[gz]",
@@ -1545,8 +1368,7 @@ def test_io_dataset_for_training(fixture_lookup, io_dataset_fixture):
         "sql|2",
         "video[mp4]",
         "video[mp4]|2",
-    ],
-)
+    ])
 def test_io_dataset_in_dataset_parallel(
     fixture_lookup, io_dataset_fixture, num_parallel_calls
 ):
@@ -1585,38 +1407,14 @@ def test_io_dataset_in_dataset_parallel(
 @pytest.mark.benchmark(
     group="io_dataset",
 )
-@pytest.mark.parametrize(
-    ("io_dataset_fixture"),
-    [
-        pytest.param("mnist"),
-        pytest.param("lmdb"),
-        pytest.param(
-            "prometheus",
-            marks=[
-                pytest.mark.skipif(
-                    (sys.platform == "darwin") or (sys.platform == "linux"),
-                    reason="TODO: GitHub issue 829",
-                ),
-            ],
-        ),
-        pytest.param("audio_wav"),
-        pytest.param("audio_wav_s24"),
-        pytest.param("audio_flac"),
-        pytest.param(
+@pytest.mark.parametrize("io_dataset_fixture", [pytest.param("mnist"), pytest.param("lmdb"), pytest.param("prometheus", marks=[pytest.mark.skipif(sys.platform in ["darwin", "linux"], reason="TODO: GitHub issue 829")]), pytest.param("audio_wav"), pytest.param("audio_wav_s24"), pytest.param("audio_flac"), pytest.param(
             "audio_vorbis",
             marks=[
                 pytest.mark.skipif(
                     sys.platform == "win32", reason="TODO Fail on Windows"
                 ),
             ],
-        ),
-        pytest.param("audio_mp3"),
-        pytest.param("hdf5"),
-        pytest.param("numpy"),
-        pytest.param("numpy_structure"),
-        pytest.param("numpy_file_tuple"),
-        pytest.param("numpy_file_dict"),
-        pytest.param(
+        ), pytest.param("audio_mp3"), pytest.param("hdf5"), pytest.param("numpy"), pytest.param("numpy_structure"), pytest.param("numpy_file_tuple"), pytest.param("numpy_file_dict"), pytest.param(
             "sql",
             marks=[
                 pytest.mark.skipif(
@@ -1624,8 +1422,7 @@ def test_io_dataset_in_dataset_parallel(
                     reason="TODO PostgreSQL not tested on macOS/Windows",
                 ),
             ],
-        ),
-        pytest.param(
+        ), pytest.param(
             "video_mp4",
             marks=[
                 pytest.mark.skipif(
@@ -1633,9 +1430,7 @@ def test_io_dataset_in_dataset_parallel(
                     reason="TODO Windows is not supported, and TODO: !!!pytest-xdist!!! on macOS",
                 ),
             ],
-        ),
-    ],
-    ids=[
+        )], ids=[
         "mnist",
         "lmdb",
         "prometheus",
@@ -1651,8 +1446,7 @@ def test_io_dataset_in_dataset_parallel(
         "numpy[file/dict]",
         "sql",
         "video[mp4]",
-    ],
-)
+    ])
 def test_io_dataset_benchmark(benchmark, fixture_lookup, io_dataset_fixture):
     """test_io_dataset_benchmark"""
     args, func, expected = fixture_lookup(io_dataset_fixture)
@@ -1665,7 +1459,7 @@ def test_io_dataset_benchmark(benchmark, fixture_lookup, io_dataset_fixture):
     entries = benchmark(f, args)
 
     assert len(entries) == len(expected)
-    assert all([element_equal(a, b) for (a, b) in zip(entries, expected)])
+    assert all(element_equal(a, b) for (a, b) in zip(entries, expected))
 
 
 @pytest.mark.parametrize(

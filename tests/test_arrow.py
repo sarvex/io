@@ -124,7 +124,7 @@ class ArrowTestBase(tf.test.TestCase):
         elif dt == tf.dtypes.string:
             arrow_type = pa.string()
         else:
-            raise TypeError("Unsupported dtype for Arrow" + str(dt))
+            raise TypeError(f"Unsupported dtype for Arrow{str(dt)}")
         if is_list:
             arrow_type = pa.list_(arrow_type)
         return arrow_type
@@ -1120,7 +1120,7 @@ class ArrowDatasetTest(ArrowTestBase):
         """Test batching with fixed length list types"""
         import tensorflow_io.arrow as arrow_io
 
-        batch_size = int(len(self.list_fixed_data[0]) / 2)
+        batch_size = len(self.list_fixed_data[0]) // 2
 
         truth_data = TruthData(
             self.list_fixed_data, self.list_fixed_dtypes, self.list_fixed_shapes
@@ -1212,7 +1212,7 @@ class ArrowDatasetTest(ArrowTestBase):
 
         # test single file
         # prefix "file://" to test scheme file system (e.g., s3, gcs, azfs, ignite)
-        columns = arrow_io.list_feather_columns("file://" + f.name)
+        columns = arrow_io.list_feather_columns(f"file://{f.name}")
         for name, dtype in list(zip(batch.schema.names, batch.schema.types)):
             assert columns[name].name == name
             assert columns[name].dtype == dtype

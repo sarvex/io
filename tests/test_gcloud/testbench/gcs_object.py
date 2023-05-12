@@ -40,7 +40,7 @@ class GcsObjectVersion:
         self.bucket_name = bucket_name
         self.name = name
         self.generation = str(generation)
-        self.object_id = bucket_name + "/o/" + name + "/" + str(generation)
+        self.object_id = f"{bucket_name}/o/{name}/{str(generation)}"
         now = time.gmtime(time.time())
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", now)
         self.media = media
@@ -118,9 +118,7 @@ class GcsObjectVersion:
         )
         if actual != expected:
             raise error_response.ErrorResponse(
-                "Mismatched CRC32C checksum expected={}, actual={}".format(
-                    expected, actual
-                )
+                f"Mismatched CRC32C checksum expected={expected}, actual={actual}"
             )
 
     def validate_encryption_for_read(self, request, prefix="x-goog-encryption"):
@@ -132,9 +130,9 @@ class GcsObjectVersion:
             'x-goog-copy-source-encryption'.
         :rtype:NoneType
         """
-        key_header = prefix + "-key"
-        hash_header = prefix + "-key-sha256"
-        algo_header = prefix + "-algorithm"
+        key_header = f"{prefix}-key"
+        hash_header = f"{prefix}-key-sha256"
+        algo_header = f"{prefix}-algorithm"
         encryption = self.metadata.get("customerEncryption")
         if encryption is None:
             # The object is not encrypted, no key is needed.
@@ -164,9 +162,9 @@ class GcsObjectVersion:
         if request.headers.get("x-goog-encryption-key") is None:
             return
         prefix = "x-goog-encryption"
-        key_header = prefix + "-key"
-        hash_header = prefix + "-key-sha256"
-        algo_header = prefix + "-algorithm"
+        key_header = f"{prefix}-key"
+        hash_header = f"{prefix}-key-sha256"
+        algo_header = f"{prefix}-algorithm"
         key_header_value = request.headers.get(key_header)
         hash_header_value = request.headers.get(hash_header)
         algo_header_value = request.headers.get(algo_header)
@@ -226,7 +224,7 @@ class GcsObject:
         version = self.revisions.get(generation)
         if version is None:
             raise error_response.ErrorResponse(
-                "Precondition Failed: generation %s not found" % generation
+                f"Precondition Failed: generation {generation} not found"
             )
         return version
 
@@ -276,7 +274,7 @@ class GcsObject:
         }
         # Cannot change `metadata` while we are iterating over it, so we make
         # a copy
-        keys = [key for key in metadata.keys()]
+        keys = list(metadata.keys())
         for key in keys:
             if key not in writeable_keys:
                 metadata.pop(key, None)
@@ -603,16 +601,12 @@ class GcsObject:
 
         :rtype:dict
         """
-        original_arguments = {}
-        for arg in GcsObject.rewrite_fixed_args():
-            original_arguments[arg] = request.args.get(arg)
-        original_arguments.update(
-            {
-                "destination_bucket": destination_bucket,
-                "destination_object": destination_object,
-            }
-        )
-        return original_arguments
+        return {
+            arg: request.args.get(arg) for arg in GcsObject.rewrite_fixed_args()
+        } | {
+            "destination_bucket": destination_bucket,
+            "destination_object": destination_object,
+        }
 
     @classmethod
     def make_rewrite_token(
@@ -764,7 +758,8 @@ class GcsObject:
             self.rewrite_operations[rewrite_token] = rewrite
             result["done"] = False
 
-        result.update(
-            {"totalBytesRewritten": bytes_rewritten, "rewriteToken": rewrite_token}
-        )
+        result |= {
+            "totalBytesRewritten": bytes_rewritten,
+            "rewriteToken": rewrite_token,
+        }
         return result

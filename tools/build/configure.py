@@ -81,7 +81,7 @@ def write_config():
             bazel_rc.write(f'build --action_env TF_HEADER_DIR="{header_dir}"\n')
 
             if sys.platform == "win32":
-                library_dir = include_list[0][2:-7] + "python"
+                library_dir = f"{include_list[0][2:-7]}python"
                 library_dir = library_dir.replace("\\", "/")
             else:
                 library_dir = libdir_list[0][2:]
@@ -95,9 +95,9 @@ def write_config():
                 if library_name.startswith(":"):
                     library_name = library_name[1:]
                 elif sys.platform == "darwin":
-                    library_name = "lib" + library_name + ".dylib"
+                    library_name = f"lib{library_name}.dylib"
                 else:
-                    library_name = "lib" + library_name + ".so"
+                    library_name = f"lib{library_name}.so"
             bazel_rc.write(
                 f'build --action_env TF_SHARED_LIBRARY_NAME="{library_name}"\n'
             )

@@ -63,9 +63,7 @@ def test_orc_keras():
             return 1.0
         if x == "versicolor":
             return 2.0
-        if x == "setosa":
-            return 3.0
-        return 4.0
+        return 3.0 if x == "setosa" else 4.0
 
     label_dataset = label_dataset.map(species_float_conversion)
     dataset = tf.data.Dataset.zip((feature_dataset, label_dataset))

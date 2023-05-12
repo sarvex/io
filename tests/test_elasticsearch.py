@@ -45,10 +45,7 @@ def is_container_running():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     status = sock.connect_ex(("127.0.0.1", 9200))
-    if status == 0:
-        return True
-    else:
-        return False
+    return status == 0
 
 
 @pytest.mark.skipif(not is_container_running(), reason="The container is not running")
@@ -74,10 +71,7 @@ def test_populate_data(record):
     """Populate the index with data"""
 
     put_item_url = f"{NODE}/{INDEX}/{DOC_TYPE}"
-    data = {}
-    for idx, attr in enumerate(ATTRS):
-        data[attr] = record[idx]
-
+    data = {attr: record[idx] for idx, attr in enumerate(ATTRS)}
     res = requests.post(put_item_url, json=data, headers=HEADERS)
 
     # The 201 status code indicates the documents have been properly indexed
@@ -113,10 +107,9 @@ def test_elasticsearch_io_dataset_no_auth():
             nodes=[NODE], index=INDEX, doc_type=DOC_TYPE
         )
     except ConnectionError as e:
-        assert str(
-            e
-        ) == "No healthy node available for the index: {}, please check the cluster config".format(
-            INDEX
+        assert (
+            str(e)
+            == f"No healthy node available for the index: {INDEX}, please check the cluster config"
         )
 
 
@@ -152,12 +145,9 @@ def test_elasticsearch_io_dataset_training():
 
     assert issubclass(type(dataset), tf.data.Dataset)
 
-    feature_columns = []
-
     # Numeric column
     fare_column = feature_column.numeric_column("fare")
-    feature_columns.append(fare_column)
-
+    feature_columns = [fare_column]
     # Bucketized column
     age = feature_column.numeric_column("age")
     age_buckets = feature_column.bucketized_column(age, boundaries=[10, 30])

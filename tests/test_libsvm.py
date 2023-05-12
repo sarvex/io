@@ -91,14 +91,12 @@ def test_dataset():
         [0, 0.105, np.nan, 2.5, 0, 0],
     ]
     expected_l = [[1], [1], [2]]
-    i = 0
-    for f, l in dataset:
+    for i, (f, l) in enumerate(dataset):
         for j, v in enumerate(f[0]):
             assert np.isclose(expected_f[i][j], v.numpy()) or (
                 np.isnan(expected_f[i][j]) and np.isnan(v.numpy())
             )
         assert np.allclose(expected_l[i], l)
-        i += 1
 
 
 if __name__ == "__main__":

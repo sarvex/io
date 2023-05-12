@@ -81,7 +81,7 @@ flags.mark_flags_as_mutual_exclusive(['code_url_prefix', 'git_branch'])
 
 def main(argv):
     if argv[1:]:
-        raise ValueError('Unrecognized arguments: {}'.format(argv[1:]))
+        raise ValueError(f'Unrecognized arguments: {argv[1:]}')
 
     if FLAGS.git_branch:
       code_url_prefix = CODE_PREFIX_TEMPLATE.format(git_branch=FLAGS.git_branch)

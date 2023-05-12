@@ -130,6 +130,4 @@ def _maybe_shuffle_and_repeat(
         )
     if shuffle:
         return dataset.shuffle(shuffle_buffer_size, shuffle_seed)
-    if num_epochs != 1:
-        return dataset.repeat(num_epochs)
-    return dataset
+    return dataset.repeat(num_epochs) if num_epochs != 1 else dataset

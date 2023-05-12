@@ -29,7 +29,7 @@ def test_decode_obj():
         "test_obj",
         "sample.obj",
     )
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     obj = tfio.experimental.image.decode_obj(tf.io.read_file(filename))
     expected = np.array(

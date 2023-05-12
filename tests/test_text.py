@@ -32,7 +32,7 @@ def test_read_text():
     )
     with open(filename, "rb") as f:
         lines = list(f)
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     filesize = tf.io.gfile.GFile(filename).size()
 
@@ -128,7 +128,7 @@ def test_re2_extract():
     )
     with open(filename, "rb") as f:
         lines = [line.strip() for line in f]
-    filename = "file://" + filename
+    filename = f"file://{filename}"
 
     dataset = tf.data.TextLineDataset(filename).map(
         lambda x: tfio.experimental.text.re2_full_match(x, ".+(ipsum).+(dolor).+")

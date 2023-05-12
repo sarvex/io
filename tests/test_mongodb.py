@@ -62,10 +62,7 @@ def is_container_running():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     status = sock.connect_ex(("127.0.0.1", 27017))
-    if status == 0:
-        return True
-    else:
-        return False
+    return status == 0
 
 
 @pytest.mark.skipif(not is_container_running(), reason="The container is not running")
@@ -87,9 +84,7 @@ def test_dataset_read():
     dataset = tfio.experimental.mongodb.MongoDBIODataset(
         uri=URI, database=DATABASE, collection=COLLECTION
     )
-    count = 0
-    for d in dataset:
-        count += 1
+    count = sum(1 for _ in dataset)
     assert count == len(RECORDS)
 
 
@@ -108,12 +103,9 @@ def test_train_model():
 
     assert issubclass(type(dataset), tf.data.Dataset)
 
-    feature_columns = []
-
     # Numeric column
     fare_column = feature_column.numeric_column("fare")
-    feature_columns.append(fare_column)
-
+    feature_columns = [fare_column]
     # Bucketized column
     age = feature_column.numeric_column("age")
     age_buckets = feature_column.bucketized_column(age, boundaries=[10, 30])
@@ -168,7 +160,5 @@ def test_dataset_read_after_delete():
     dataset = tfio.experimental.mongodb.MongoDBIODataset(
         uri=URI, database=DATABASE, collection=COLLECTION
     )
-    count = 0
-    for d in dataset:
-        count += 1
+    count = sum(1 for _ in dataset)
     assert count == 0

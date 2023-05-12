@@ -54,7 +54,7 @@ class AvroIODataset(tf.compat.v2.data.Dataset):
         with tf.name_scope("AvroIODataset") as scope:
             capacity = 4096
 
-            metadata = ["schema: %s" % schema]
+            metadata = [f"schema: {schema}"]
             resource, columns_v = core_ops.io_avro_readable_init(
                 filename,
                 metadata=metadata,

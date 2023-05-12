@@ -51,7 +51,7 @@ class KafkaIODataset(tf.data.Dataset):
 
             metadata = list(configuration or [])
             if servers is not None:
-                metadata.append("bootstrap.servers=%s" % servers)
+                metadata.append(f"bootstrap.servers={servers}")
             resource = core_ops.io_kafka_readable_init(
                 topic, partition, offset=0, metadata=metadata
             )
@@ -118,7 +118,7 @@ class KafkaStreamIODataset(tf.data.Dataset):
 
             metadata = list(configuration or [])
             if servers is not None:
-                metadata.append("bootstrap.servers=%s" % servers)
+                metadata.append(f"bootstrap.servers={servers}")
             resource = core_ops.io_kafka_readable_init(
                 topic, partition, offset, metadata=metadata
             )

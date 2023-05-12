@@ -42,7 +42,8 @@ def test_pulsar_simple_messages():
         timeout=default_pulsar_timeout,
     )
     assert np.all(
-        [k.numpy() for (k, _) in dataset] == [("D" + str(i)).encode() for i in range(6)]
+        [k.numpy() for (k, _) in dataset]
+        == [f"D{str(i)}".encode() for i in range(6)]
     )
 
 
@@ -65,11 +66,11 @@ def test_pulsar_keyed_messages():
         subscription="subscription-0",
         timeout=default_pulsar_timeout,
     )
-    kv = dict()
+    kv = {}
     for (msg, key) in dataset:
         kv.setdefault(key.numpy().decode(), []).append(msg.numpy())
-    assert kv["K0"] == [("D" + str(i)).encode() for i in range(0, 6, 2)]
-    assert kv["K1"] == [("D" + str(i)).encode() for i in range(1, 6, 2)]
+    assert kv["K0"] == [f"D{str(i)}".encode() for i in range(0, 6, 2)]
+    assert kv["K1"] == [f"D{str(i)}".encode() for i in range(1, 6, 2)]
 
 
 @pytest.mark.skipif(
@@ -91,7 +92,7 @@ def test_pulsar_resubscribe():
     )
     # 1. Append new messages to topic
     for i in range(6, 10):
-        writer.write("D" + str(i))
+        writer.write(f"D{str(i)}")
     writer.flush()
 
     # 2. Use the same subscription with `test_pulsar_simple_messages` to continue consuming
@@ -103,7 +104,7 @@ def test_pulsar_resubscribe():
     )
     assert np.all(
         [k.numpy() for (k, _) in dataset]
-        == [("D" + str(i)).encode() for i in range(6, 10)]
+        == [f"D{str(i)}".encode() for i in range(6, 10)]
     )
 
     # 3. Use another subscription to consume messages from beginning
@@ -115,7 +116,7 @@ def test_pulsar_resubscribe():
     )
     assert np.all(
         [k.numpy() for (k, _) in dataset]
-        == [("D" + str(i)).encode() for i in range(10)]
+        == [f"D{str(i)}".encode() for i in range(10)]
     )
 
 
@@ -141,9 +142,7 @@ def test_pulsar_invalid_arguments():
             timeout=INVALID_TIMEOUT,
         )
     except ValueError as e:
-        assert str(e) == "Invalid timeout value: {}, must be > 0".format(
-            INVALID_TIMEOUT
-        )
+        assert str(e) == f"Invalid timeout value: {INVALID_TIMEOUT}, must be > 0"
 
     VALID_TIMEOUT = default_pulsar_timeout
     INVALID_POLL_TIMEOUT = -45
@@ -156,8 +155,9 @@ def test_pulsar_invalid_arguments():
             poll_timeout=INVALID_POLL_TIMEOUT,
         )
     except ValueError as e:
-        assert str(e) == "Invalid poll_timeout value: {}, must be > 0".format(
-            INVALID_POLL_TIMEOUT
+        assert (
+            str(e)
+            == f"Invalid poll_timeout value: {INVALID_POLL_TIMEOUT}, must be > 0"
         )
 
     LARGE_POLL_TIMEOUT = VALID_TIMEOUT + 1
@@ -170,10 +170,9 @@ def test_pulsar_invalid_arguments():
             poll_timeout=LARGE_POLL_TIMEOUT,
         )
     except ValueError as e:
-        assert str(
-            e
-        ) == "Invalid poll_timeout value: {}, must be <= timeout({})".format(
-            LARGE_POLL_TIMEOUT, VALID_TIMEOUT
+        assert (
+            str(e)
+            == f"Invalid poll_timeout value: {LARGE_POLL_TIMEOUT}, must be <= timeout({VALID_TIMEOUT})"
         )
 
 
@@ -190,7 +189,7 @@ def test_pulsar_write_simple_messages():
     )
     # 1. Write 10 messages
     for i in range(10):
-        writer.write("msg-" + str(i))
+        writer.write(f"msg-{str(i)}")
     writer.flush()
 
     # 2. Consume messages and verify
@@ -202,7 +201,7 @@ def test_pulsar_write_simple_messages():
     )
     assert np.all(
         [k.numpy() for (k, _) in dataset]
-        == [("msg-" + str(i)).encode() for i in range(10)]
+        == [f"msg-{str(i)}".encode() for i in range(10)]
     )
 
 
@@ -219,7 +218,7 @@ def test_pulsar_write_keyed_messages():
     )
     # 1. Write 10 keyed messages, the key set is 0,1,2,0,1,2,...
     for i in range(10):
-        value = "msg-" + str(i)
+        value = f"msg-{str(i)}"
         key = str(i % 3)
         writer.write(value=value, key=key)
     writer.flush()
@@ -231,12 +230,12 @@ def test_pulsar_write_keyed_messages():
         subscription="subscription-0",
         timeout=default_pulsar_timeout,
     )
-    kv = dict()
+    kv = {}
     for (msg, key) in dataset:
         kv.setdefault(key.numpy().decode(), []).append(msg.numpy())
-    assert kv["0"] == [("msg-" + str(i)).encode() for i in range(0, 10, 3)]
-    assert kv["1"] == [("msg-" + str(i)).encode() for i in range(1, 10, 3)]
-    assert kv["2"] == [("msg-" + str(i)).encode() for i in range(2, 10, 3)]
+    assert kv["0"] == [f"msg-{str(i)}".encode() for i in range(0, 10, 3)]
+    assert kv["1"] == [f"msg-{str(i)}".encode() for i in range(1, 10, 3)]
+    assert kv["2"] == [f"msg-{str(i)}".encode() for i in range(2, 10, 3)]
 
 
 if __name__ == "__main__":

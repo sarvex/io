@@ -63,7 +63,7 @@ class Readable(metaclass=abc.ABCMeta):
     def _read(self, data_type, length):
         """Reads, unpacks and returns specified type (little-endian)."""
         data_buffer = self.read_data(length)
-        return struct.unpack("<" + data_type, data_buffer)[0]
+        return struct.unpack(f"<{data_type}", data_buffer)[0]
 
 
 class DataBuffer(Readable):
@@ -172,7 +172,7 @@ class TcpClient(Readable):
 
     def _write(self, value, data_type):
         """Packs and writes data using the specified type (little-endian)."""
-        data_buffer = struct.pack("<" + data_type, value)
+        data_buffer = struct.pack(f"<{data_type}", value)
         self.sock.sendall(data_buffer)
 
 
@@ -245,10 +245,7 @@ class TypeTreeNode:  # pylint: disable=useless-object-inheritance
         """Formats the tree object as required by `Dataset.output_classes`."""
         if self.fields is None:
             return tf.Tensor
-        output_classes = {}
-        for field in self.fields:
-            output_classes[field.name] = field.to_output_classes()
-        return output_classes
+        return {field.name: field.to_output_classes() for field in self.fields}
 
     def to_output_shapes(self):
         """Formats the tree object as required by `Dataset.output_shapes`."""
@@ -256,14 +253,9 @@ class TypeTreeNode:  # pylint: disable=useless-object-inheritance
             if self.type_id in types:
                 object_type = types[self.type_id]
                 is_array = object_type[1]
-                if is_array:
-                    return tf.TensorShape([None])
-                return tf.TensorShape([])
+                return tf.TensorShape([None]) if is_array else tf.TensorShape([])
             raise ValueError("Unsupported type [type_id=%d]" % self.type_id)
-        output_shapes = {}
-        for field in self.fields:
-            output_shapes[field.name] = field.to_output_shapes()
-        return output_shapes
+        return {field.name: field.to_output_shapes() for field in self.fields}
 
     def to_output_types(self):
         """Formats the tree object as required by `Dataset.output_types`."""
@@ -272,10 +264,7 @@ class TypeTreeNode:  # pylint: disable=useless-object-inheritance
                 object_type = types[self.type_id]
                 return object_type[0]
             raise ValueError("Unsupported type [type_id=%d]" % self.type_id)
-        output_types = {}
-        for field in self.fields:
-            output_types[field.name] = field.to_output_types()
-        return output_types
+        return {field.name: field.to_output_types() for field in self.fields}
 
     def to_flat(self):
         """Returns a list of node types."""
@@ -359,16 +348,8 @@ class IgniteClient(TcpClient):
         """Makes a handshake  after connect and before any other calls."""
         msg_len = 8
 
-        if self.username is None:
-            msg_len += 1
-        else:
-            msg_len += 5 + len(self.username)
-
-        if self.password is None:
-            msg_len += 1
-        else:
-            msg_len += 5 + len(self.password)
-
+        msg_len += 1 if self.username is None else 5 + len(self.username)
+        msg_len += 1 if self.password is None else 5 + len(self.password)
         self.write_int(msg_len)  # Message length
         self.write_byte(1)  # Handshake operation
         self.write_short(1)  # Version (1.1.0)
@@ -428,7 +409,7 @@ class IgniteClient(TcpClient):
         if status != 0:
             err_msg = self._parse_string()
             if err_msg is None:
-                raise RuntimeError("Scan Query Error [status=%s]" % status)
+                raise RuntimeError(f"Scan Query Error [status={status}]")
             raise RuntimeError(
                 f"Scan Query Error [status={status}, message='{err_msg}']"
             )
@@ -446,14 +427,15 @@ class IgniteClient(TcpClient):
 
         self.read_byte()  # Next page
 
-        res = TypeTreeNode(
+        return TypeTreeNode(
             "root",
             0,
-            [self._collect_types("key", payload), self._collect_types("val", payload)],
+            [
+                self._collect_types("key", payload),
+                self._collect_types("val", payload),
+            ],
             [0, 1],
         )
-
-        return res
 
     def _java_hash_code(self, s):
         """Computes hash code of the specified string using Java code."""
@@ -462,7 +444,7 @@ class IgniteClient(TcpClient):
             h = (31 * h + ord(c)) & 0xFFFFFFFF
         return ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
 
-    def _collect_types(self, field_name, data):  # pylint: disable=redefined-outer-name
+    def _collect_types(self, field_name, data):    # pylint: disable=redefined-outer-name
         """Extracts type information from the specified object."""
         type_id = data.read_byte()
 
@@ -578,9 +560,7 @@ class IgniteClient(TcpClient):
                 if header == 9:
                     str_length = data.read_int()
                     data.skip(str_length)
-                elif header == 101:
-                    pass
-                else:
+                elif header != 101:
                     raise RuntimeError(
                         "Unknown binary type when expected string [type_id=%d]" % header
                     )

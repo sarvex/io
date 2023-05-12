@@ -50,7 +50,7 @@ class FakeBigQueryServer(storage_pb2_grpc.BigQueryStorageServicer):
         self._project_id = ""
         self._table_id = ""
         self._dataset_id = ""
-        self._streams = list()
+        self._streams = []
         self._avro_schema = avro_schema
         self._rows_per_stream = rows_per_stream
 
@@ -59,8 +59,8 @@ class FakeBigQueryServer(storage_pb2_grpc.BigQueryStorageServicer):
         )
         storage_pb2_grpc.add_BigQueryStorageServicer_to_server(self, self._grpc_server)
         port = self._grpc_server.add_insecure_port("localhost:0")
-        self._endpoint = "localhost:" + str(port)
-        print("started a fake server on :" + self._endpoint)
+        self._endpoint = f"localhost:{str(port)}"
+        print(f"started a fake server on :{self._endpoint}")
 
     def start(self):
         self._grpc_server.start()
@@ -109,9 +109,9 @@ class FakeBigQueryServer(storage_pb2_grpc.BigQueryStorageServicer):
             stream.name = stream_name
         return response
 
-    def ReadRows(self, request, context):  # pylint: disable=unused-argument
+    def ReadRows(self, request, context):    # pylint: disable=unused-argument
         """ReadRows"""
-        print("called ReadRows on a fake server: %s" % str(request))
+        print(f"called ReadRows on a fake server: {str(request)}")
         response = storage_pb2.ReadRowsResponse()
         stream_index = self._streams.index(request.read_position.stream.name)
         if 0 <= stream_index < len(self._rows_per_stream):
@@ -317,11 +317,11 @@ class BigqueryOpsTest(test.TestCase):
 
     @staticmethod
     def _get_nonrepeated_only_fields(dictionary):
-        nonrepeated_only_dict = {}
-        for key, value in dictionary.items():
-            if not key.startswith("repeated"):
-                nonrepeated_only_dict[key] = value
-        return nonrepeated_only_dict
+        return {
+            key: value
+            for key, value in dictionary.items()
+            if not key.startswith("repeated")
+        }
 
     @classmethod
     def setUpClass(cls):  # pylint: disable=invalid-name

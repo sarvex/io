@@ -82,7 +82,7 @@ def test_str_csv_format():
     )
     csv = tfio.IOTensor.from_csv(csv_path)
     assert np.all(
-        csv("Month").to_tensor()[0:10].numpy()
+        csv("Month").to_tensor()[:10].numpy()
         == [
             b"1949-01",
             b"1949-02",
@@ -97,7 +97,7 @@ def test_str_csv_format():
         ]
     )
     assert np.all(
-        csv("Passengers").to_tensor()[0:10].numpy()
+        csv("Passengers").to_tensor()[:10].numpy()
         == [
             112,
             118,

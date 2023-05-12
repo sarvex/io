@@ -37,7 +37,7 @@ class NumpyIODataset(tf.data.Dataset):
                 return address, "", "", shape, dtype
 
             flatten = tf.nest.flatten(entries)
-            assert all([entry.shape[0] == flatten[0].shape[0] for entry in flatten])
+            assert all(entry.shape[0] == flatten[0].shape[0] for entry in flatten)
 
             params = [p(entry) for entry in flatten]
 
@@ -104,15 +104,14 @@ class NumpyFileIODataset(tf.data.Dataset):
                 ]
 
                 indices = None
-                if all([e.numpy().decode().startswith("arr_") for e in arrays]):
+                if all(e.numpy().decode().startswith("arr_") for e in arrays):
                     try:
                         indices = [int(e.numpy()[4:]) for e in arrays]
                     except ValueError:
                         pass
                 if indices is not None:
-                    values = list(indices)
-                    values.sort()
-                    if not all([k == v for k, v in enumerate(values)]):
+                    values = sorted(indices)
+                    if any(k != v for k, v in enumerate(values)):
                         indices = None
 
                 # if indices is continuously, then construct a tuple, otherwise a dict.
@@ -125,7 +124,7 @@ class NumpyFileIODataset(tf.data.Dataset):
 
                 flatten = tf.nest.flatten(entries)
                 shapes = [entry.shape for entry in flatten]
-                assert all([shape[0] == shapes[0][0] for shape in shapes])
+                assert all(shape[0] == shapes[0][0] for shape in shapes)
             else:
                 assert spec is not None
                 if isinstance(spec, tuple):

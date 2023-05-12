@@ -98,8 +98,7 @@ def test_parquet():
         "flba_field",
     ]
     dataset = tfio.IODataset.from_parquet(filename, columns)
-    i = 0
-    for v in dataset:
+    for i, v in enumerate(dataset):
         v0 = (i % 2) == 0
         v1 = i
         v2 = i * 1000 * 1000 * 1000 * 1000
@@ -121,7 +120,6 @@ def test_parquet():
         assert np.isclose(v5, p5.numpy())
         assert v6 == p6.numpy()
         assert v7 == p7.numpy()
-        i += 1
 
 
 def test_parquet_dataset_ordered_dict():
@@ -195,14 +193,12 @@ def test_parquet_data():
     )
     parquet = pd.read_parquet(filename)
     dataset = tfio.IODataset.from_parquet(filename)
-    i = 0
-    for columns in dataset:
+    for i, columns in enumerate(dataset):
         assert columns[b"user_id"] == parquet["user_id"][i]
         assert columns[b"movie_id"] == parquet["movie_id"][i]
         assert columns[b"movie_title"] == parquet["movie_title"][i]
         assert columns[b"rating"] == parquet["rating"][i]
         assert columns[b"timestamp"] == parquet["timestamp"][i]
-        i += 1
 
 
 def test_parquet_dataset_from_file_pattern():

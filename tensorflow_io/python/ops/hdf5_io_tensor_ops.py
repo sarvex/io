@@ -52,9 +52,7 @@ class BaseHDF5GraphIOTensor:
     # String Encoding
     # =============================================================================
     def __repr__(self):
-        return "<{}: shape={}, dtype={}>".format(
-            self.__class__.__name__, self.shape, self.dtype
-        )
+        return f"<{self.__class__.__name__}: shape={self.shape}, dtype={self.dtype}>"
 
     # =============================================================================
     # Tensor Type Conversions
@@ -87,7 +85,7 @@ class BaseHDF5GraphIOTensor:
         """Returns the specified piece of this IOTensor."""
         # always convert to tuple to process
         if not isinstance(key, tuple):
-            key = tuple([key])
+            key = (key, )
         # get the start and stop of each element
         indices = [
             (k.start, k.stop) if isinstance(k, slice) else (k, k + 1) for k in key

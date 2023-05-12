@@ -28,7 +28,7 @@ class KafkaIOLayer(tf.keras.layers.Layer):
         """Obtain a Kafka IO layer to be used with tf.keras."""
         metadata = list(configurations or [])
         if servers is not None:
-            metadata.append("bootstrap.servers=%s" % servers)
+            metadata.append(f"bootstrap.servers={servers}")
         self._resource = core_ops.io_layer_kafka_init(topic, partition, metadata)
         super().__init__(trainable=False)
 
